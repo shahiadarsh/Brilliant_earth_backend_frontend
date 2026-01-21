@@ -46,7 +46,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     const [selectedDiamond, setSelectedDiamond] = useState<SelectedDiamond | null>(null)
     const [currentStep, setCurrentStep] = useState<'setting' | 'diamond' | 'gemstone' | 'review'>('setting')
     const [startType, setStartType] = useState<'setting' | 'diamond' | 'gemstone' | null>(null)
-    const [filters, setFiltersState] = useState({
+    const [filters, setFiltersState] = useState<SelectionContextType['filters']>({
         setting: { style: [], metal: [] },
         diamond: { shape: [], origin: 'natural', priceRange: [180, 500000], caratRange: [0.25, 20.45] },
         gemstone: { color: [], shape: [] }
@@ -86,8 +86,19 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
         }))
     }, [selectedSetting, selectedDiamond, currentStep, startType, filters])
 
-    const setSetting = (setting: SelectedSetting | null) => setSelectedSetting(setting)
-    const setDiamond = (diamond: SelectedDiamond | null) => setSelectedDiamond(diamond)
+    const setSetting = (setting: SelectedSetting | null) => {
+        setSelectedSetting(setting)
+        if (setting) {
+            // Logic for auto-advancing if needed could go here
+        }
+    }
+
+    const setDiamond = (diamond: SelectedDiamond | null) => {
+        setSelectedDiamond(diamond)
+        if (diamond) {
+            // Logic for auto-advancing if needed could go here
+        }
+    }
 
     const clearSelection = () => {
         setSelectedSetting(null)

@@ -1,17 +1,20 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useSelection } from '@/context/SelectionContext'
 import { useCart } from '@/context/CartContext'
 import { useRouter } from 'next/navigation'
 import { FlowHeader } from '@/components/shared/FlowHeader'
 import Image from 'next/image'
-import { ShieldCheck, Truck, Sparkles, Heart, ArrowLeft, ArrowRight, ShoppingBag, Info } from 'lucide-react'
+import { ShieldCheck, Truck, Sparkles, Heart, ArrowLeft, ArrowRight, ShoppingBag, Info, Ruler } from 'lucide-react'
 import Link from 'next/link'
+
+const RING_SIZES = [3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9]
 
 export default function ReviewSelectionPage() {
     const { selectedSetting, selectedDiamond, clearSelection } = useSelection()
     const { addToCart } = useCart()
+    const [selectedSize, setSelectedSize] = useState<number | string>('7')
     const router = useRouter()
 
     if (!selectedSetting || !selectedDiamond) {
@@ -35,13 +38,14 @@ export default function ReviewSelectionPage() {
 
     const handleAddToBag = () => {
         addToCart({
-            id: `custom-${selectedSetting.id}-${selectedDiamond.id}`,
+            id: `custom-${selectedSetting.id}-${selectedDiamond.id}-${selectedSize}`,
             name: `${selectedSetting.name} with ${selectedDiamond.name}`,
             price: totalPrice,
             image: selectedSetting.image,
             metal: selectedSetting.metal,
-            quantity: 1
-        })
+            quantity: 1,
+            // Add custom properties if your CartItem supports it, or modify CartItem interface
+        } as any)
         clearSelection()
         router.push('/cart')
     }
@@ -101,9 +105,6 @@ export default function ReviewSelectionPage() {
                                 </div>
                                 <h1 className="text-[40px] md:text-[52px] font-serif text-gray-900 leading-tight italic">Your Bespoke <br /> Creation.</h1>
                             </div>
-                            <p className="text-[16px] font-light text-gray-500 leading-relaxed max-w-sm italic">
-                                "A timeless symbol of love, crafted with precision and ethics at every step."
-                            </p>
                         </div>
 
                         <div className="bg-white border border-gray-100 p-8 md:p-12 space-y-10 shadow-2xl relative rounded-sm">
@@ -131,6 +132,31 @@ export default function ReviewSelectionPage() {
                                     <div className="text-right">
                                         <p className="text-xl font-serif text-gray-900">${selectedDiamond.price.toLocaleString()}</p>
                                         <button className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-2 hover:text-black transition-colors">Change Stone</button>
+                                    </div>
+                                </div>
+
+                                {/* Ring Size Selection */}
+                                <div className="space-y-6 pt-6 border-t border-gray-50">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <Ruler className="w-4 h-4 text-[#A68F7A]" />
+                                            <p className="text-[11px] uppercase font-bold tracking-widest text-[#163E3E]">Ring Size</p>
+                                        </div>
+                                        <button className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hover:text-[#163E3E] transition-colors">Size Guide</button>
+                                    </div>
+                                    <div className="grid grid-cols-6 md:grid-cols-7 gap-2">
+                                        {RING_SIZES.map(size => (
+                                            <button
+                                                key={size}
+                                                onClick={() => setSelectedSize(size)}
+                                                className={`py-2 text-[12px] rounded-sm transition-all border ${selectedSize === size
+                                                    ? 'bg-[#163E3E] text-white border-[#163E3E] shadow-md'
+                                                    : 'border-gray-100 text-gray-400 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -183,3 +209,4 @@ export default function ReviewSelectionPage() {
         </div>
     )
 }
+

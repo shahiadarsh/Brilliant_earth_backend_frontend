@@ -4,9 +4,11 @@ import React from 'react'
 import { useSelection } from '@/context/SelectionContext'
 import { Diamond, Gem, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export function FlowHeader() {
     const { currentStep, selectedSetting, selectedDiamond, startType } = useSelection()
+    const router = useRouter()
 
     const steps = [
         {
@@ -57,16 +59,21 @@ export function FlowHeader() {
                     {steps.map((step, index) => (
                         <div
                             key={step.id}
-                            className={`flex-1 flex items-center justify-center px-8 relative transition-all duration-300 ${step.isActive ? 'bg-[#F9F9F9]' : 'bg-white'
-                                }`}
+                            className={`flex-1 flex items-center justify-center px-8 relative transition-all duration-300 ${step.isActive ? 'bg-[#F9F9F9]' : 'bg-white'} ${step.isCompleted || step.id === 'design' ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default opacity-80'}`}
+                            onClick={() => {
+                                if (step.id === 'design') {
+                                    router.push('/engagement-rings')
+                                } else if (step.isCompleted || step.isActive) {
+                                    router.push(`/design/${step.id}`)
+                                }
+                            }}
                         >
                             {/* Chevron Start Mask */}
                             {index > 0 && (
                                 <div
-                                    className="absolute left-0 inset-y-0 w-4 z-10"
+                                    className={`absolute left-0 inset-y-0 w-4 z-10 transition-colors ${step.isActive ? 'bg-[#F9F9F9]' : 'bg-white'}`}
                                     style={{
                                         clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
-                                        backgroundColor: 'white'
                                     }}
                                 />
                             )}
@@ -85,7 +92,7 @@ export function FlowHeader() {
                             {/* Chevron End Tip */}
                             {index < steps.length - 1 && (
                                 <div
-                                    className="absolute right-[-16px] inset-y-0 w-4 z-30"
+                                    className="absolute right-[-16px] inset-y-0 w-4 z-30 transition-colors"
                                     style={{
                                         clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
                                         backgroundColor: step.isActive ? '#F9F9F9' : 'white'
