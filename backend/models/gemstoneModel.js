@@ -1,0 +1,29 @@
+import mongoose from 'mongoose';
+
+const gemstoneSchema = new mongoose.Schema({
+    type: { type: String, required: true }, // Variety (Sapphire, Emerald, etc.)
+    color: { type: String, required: true },
+    intensity: { type: String },
+    shape: { type: String, required: true },
+    carat: { type: Number, required: true },
+    origin: { type: String },
+    price: { type: Number, required: true },
+    stock: { type: Number, default: 1 },
+
+    // Technical
+    treatment: { type: String },
+    hardness: { type: String },
+    clarity: { type: String },
+    dimensions: { type: String },
+
+    images: [{ type: String }],
+    slug: { type: String, required: true, unique: true },
+
+    // SEO
+    metaTitle: { type: String },
+    metaDescription: { type: String },
+    keywords: { type: String }
+}, { timestamps: true });
+
+const Gemstone = mongoose.model('Gemstone', gemstoneSchema);
+export default Gemstone;
