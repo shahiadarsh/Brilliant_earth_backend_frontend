@@ -22,7 +22,7 @@ export const ringsApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ['Ring'],
         }),
         updateRing: builder.mutation({
-            query: ({ id, ...data }) => ({
+            query: ({ id, data }) => ({
                 url: `/rings/${id}`,
                 method: 'PATCH',
                 body: data,

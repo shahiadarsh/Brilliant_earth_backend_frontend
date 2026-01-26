@@ -17,18 +17,35 @@ export interface SelectedDiamond {
     image: string
     type: 'natural' | 'lab' | 'gemstone'
     shape?: string
+    carat?: number
+    cut?: string
+    color?: string
+    clarity?: string
+}
+
+export interface SelectedBridalSet {
+    id: string | number
+    name: string
+    engagementRing: string
+    weddingBand: string
+    price: number
+    image: string
+    metal: string
 }
 
 interface SelectionContextType {
     selectedSetting: SelectedSetting | null
     selectedDiamond: SelectedDiamond | null
+    selectedBridalSet: SelectedBridalSet | null
     setSetting: (setting: SelectedSetting | null) => void
     setDiamond: (diamond: SelectedDiamond | null) => void
+    setBridalSet: (bridalSet: SelectedBridalSet | null) => void
     clearSelection: () => void
     currentStep: 'setting' | 'diamond' | 'gemstone' | 'review'
     setCurrentStep: (step: 'setting' | 'diamond' | 'gemstone' | 'review') => void
-    startType: 'setting' | 'diamond' | 'gemstone' | null
-    setStartType: (type: 'setting' | 'diamond' | 'gemstone' | null) => void
+    startType: 'setting' | 'diamond' | 'gemstone' | 'bridal-set' | null
+    setStartType: (type: 'setting' | 'diamond' | 'gemstone' | 'bridal-set' | null) => void
+    addToCart: (item: any) => void
 
     // Filters
     filters: {
@@ -44,8 +61,9 @@ const SelectionContext = createContext<SelectionContextType | undefined>(undefin
 export function SelectionProvider({ children }: { children: React.ReactNode }) {
     const [selectedSetting, setSelectedSetting] = useState<SelectedSetting | null>(null)
     const [selectedDiamond, setSelectedDiamond] = useState<SelectedDiamond | null>(null)
+    const [selectedBridalSet, setSelectedBridalSet] = useState<SelectedBridalSet | null>(null)
     const [currentStep, setCurrentStep] = useState<'setting' | 'diamond' | 'gemstone' | 'review'>('setting')
-    const [startType, setStartType] = useState<'setting' | 'diamond' | 'gemstone' | null>(null)
+    const [startType, setStartType] = useState<'setting' | 'diamond' | 'gemstone' | 'bridal-set' | null>(null)
     const [filters, setFiltersState] = useState<SelectionContextType['filters']>({
         setting: { style: [], metal: [] },
         diamond: { shape: [], origin: 'natural', priceRange: [180, 500000], caratRange: [0.25, 20.45] },
@@ -57,6 +75,13 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
             ...prev,
             [type]: { ...prev[type], ...newFilters }
         }))
+    }
+
+    const addToCart = (item: any) => {
+        // Store in localStorage for cart page
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]')
+        cart.push(item)
+        localStorage.setItem('cart', JSON.stringify(cart))
     }
 
     // Sync with local storage to persist the flow
@@ -112,15 +137,18 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
         <SelectionContext.Provider value={{
             selectedSetting,
             selectedDiamond,
+            selectedBridalSet,
             setSetting,
             setDiamond,
+            setBridalSet: setSelectedBridalSet,
             clearSelection,
             currentStep,
             setCurrentStep,
             startType,
             setStartType,
             filters,
-            setFilters
+            setFilters,
+            addToCart
         }}>
             {children}
         </SelectionContext.Provider>

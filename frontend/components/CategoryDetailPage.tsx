@@ -7,6 +7,7 @@ import { ChevronRight, SlidersHorizontal, ChevronDown, Sparkles, ShieldCheck, He
 import { useState, useMemo, useEffect, useRef } from "react"
 import { ProductCard } from "@/components/shared/ProductCard"
 import { useCart } from "@/context/CartContext"
+import { useGetProductsQuery } from "@/lib/redux/slices/productsApiSlice"
 
 // Types for filtering
 type FilterState = {
@@ -30,7 +31,8 @@ export default function CategoryDetailPage() {
     // State
     const [openDropdown, setOpenDropdown] = useState<string | null>(null)
     const [sortBy, setSortBy] = useState("Featured")
-    const { wishlist, toggleWishlist } = useCart()
+    // const { wishlist, toggleWishlist } = useCart()
+    const [page, setPage] = useState(1);
     const [filters, setFilters] = useState<FilterState>({
         metal: [],
         price: null,
@@ -38,6 +40,79 @@ export default function CategoryDetailPage() {
         style: [],
         carat: null
     })
+
+    // Extract category and subcategory from pathname
+    const pathSegments = pathname.split('/').filter(Boolean)
+    const categorySegment = pathSegments[0] || "engagement-rings"
+    const subcategorySegment = pathSegments[1] || ""
+    const thirdSegment = pathSegments[2] || ""
+
+    // Prepare query params for backend
+    const queryParams = useMemo(() => {
+        const query: any = {
+            page,
+            limit: 8, // Set a reasonable limit
+        };
+
+        query.categorySlug = categorySegment;
+
+        if (subcategorySegment) {
+            query.styleSlug = subcategorySegment;
+        }
+
+        // Handle specific gemstone/wedding metal flows
+        if (thirdSegment) {
+            const metals = ["platinum", "yellow-gold", "white-gold", "rose-gold"];
+            if (metals.includes(thirdSegment)) {
+                query.metal = thirdSegment;
+            } else {
+                // Assume it's a stone type or specific style
+                query.styleSlug = thirdSegment;
+            }
+        }
+
+        if (filters.metal.length > 0) query.metal = filters.metal[0];
+        if (filters.shape.length > 0) query.shape = filters.shape[0];
+
+        // Sorting
+        if (sortBy === "Price: Low to High") query.sort = 'price-asc';
+        if (sortBy === "Price: High to Low") query.sort = 'price-desc';
+        if (sortBy === "Newest") query.sort = 'newest';
+
+        return query;
+
+    }, [categorySegment, subcategorySegment, thirdSegment, filters, sortBy, page])
+
+    // Fetch Data
+    const { data, isLoading, isFetching } = useGetProductsQuery(queryParams);
+
+    // Local state for accumulated products
+    const [allProducts, setAllProducts] = useState<any[]>([]);
+
+    // Effect to append or reset products
+    useEffect(() => {
+        if (data?.data) {
+            if (page === 1) {
+                setAllProducts(data.data);
+            } else {
+                setAllProducts(prev => {
+                    // Check for duplicates to be safe, though not strictly necessary if pagination is stable
+                    const newProducts = data.data.filter((newP: any) => !prev.some(p => p._id === newP._id));
+                    return [...prev, ...newProducts];
+                });
+            }
+        }
+    }, [data, page]);
+
+    const products = allProducts;
+    const totalResults = data?.pagination?.total || 0;
+    const totalPages = data?.pagination?.pages || 1;
+
+    // Reset pagination when filters change (handled by setPage(1) in toggleFilters)
+    // We also need to clear products immediately to avoid showing stale data while loading new filter results? 
+    // Actually, setting page to 1 will trigger new fetch, and when that comes back, page===1 block runs.
+
+    // Explicitly reset products when completely changing context key if needed, but page dependency handles it.
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -50,85 +125,38 @@ export default function CategoryDetailPage() {
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
 
-    // Extract category and subcategory from pathname
-    const pathSegments = pathname.split('/').filter(Boolean)
-    const category = pathSegments[0] || "engagement-rings"
-    const subcategory = pathSegments[1] || "all-designs"
-
     // Capitalize and format for display
     const formatTitle = (str: string) => str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-    const displayCategory = formatTitle(category)
-    const displayTitle = formatTitle(subcategory)
+    const displayCategory = formatTitle(categorySegment)
+    const displayTitle = thirdSegment ? formatTitle(thirdSegment) : (subcategorySegment ? formatTitle(subcategorySegment) : displayCategory);
 
-    // Mock Products Data with stable images
-    const products = useMemo(() => {
-        const imageList = [
-            "/ring1.jfif",
-            "/ring2.jfif",
-            "/ring3.jfif",
-            "/ring4.jfif",
-            "/ring5.jfif",
-            "/ring6.jfif",
-            "/sign1.jfif",
-            "/sign2.jfif",
-            "/sign3.jfif",
-            "/sign4.jfif",
-            "/sign5.jfif",
-            "/sign6.jfif",
-        ]
-
-        return Array.from({ length: 12 }).map((_, i) => ({
-            id: i + 1,
-            name: `${displayTitle} ${i % 2 === 0 ? 'Signature' : 'Classic'} Design`,
-            metal: METALS[i % METALS.length],
-            shape: SHAPES[i % SHAPES.length],
-            style: STYLES[i % STYLES.length],
-            price: 2100 + (i * 450),
-            carat: (0.7 + (i * 0.15)).toFixed(2),
-            imagesByMetal: {
-                "18K White Gold": imageList[i % imageList.length],
-                "18K Yellow Gold": imageList[(i + 1) % imageList.length],
-                "14K Rose Gold": imageList[(i + 2) % imageList.length],
-                "Platinum": imageList[(i + 3) % imageList.length],
-            }
-        }))
-    }, [displayTitle])
-
-    // Filter Logic
-    const filteredProducts = useMemo(() => {
-        let result = [...products]
-
-        if (filters.metal.length > 0) {
-            result = result.filter(p => filters.metal.includes(p.metal))
-        }
-        if (filters.shape.length > 0) {
-            result = result.filter(p => filters.shape.includes(p.shape))
-        }
-        if (filters.style.length > 0) {
-            result = result.filter(p => filters.style.includes(p.style))
-        }
-
-        if (sortBy === "Price: Low to High") result.sort((a, b) => a.price - b.price)
-        if (sortBy === "Price: High to Low") result.sort((a, b) => b.price - a.price)
-        if (sortBy === "Newest") result.sort((a, b) => b.id - a.id)
-
-        return result
-    }, [products, filters, sortBy])
 
     const toggleFilters = (type: keyof FilterState, value: string) => {
         setFilters(prev => {
             const current = (prev[type] || []) as string[]
+            // Single select for now if backend only supports string
+            // But let's keep multi-select UI logic and just grab first for query if needed
+            // Actually let's assume single select for simplicity in backend mapping or update backend later
+
+            // Toggle Logic
             const next = current.includes(value)
                 ? current.filter(v => v !== value)
-                : [...current, value]
+                : [value] // Change to [...current, value] if multi-select supported
+
             return { ...prev, [type]: next }
         })
+        setPage(1); // Reset page on filter change
+        setAllProducts([]); // Clear current list so we don't mix results
     }
 
-    const clearFilters = () => setFilters({ metal: [], price: null, shape: [], style: [], carat: null })
+    const clearFilters = () => {
+        setFilters({ metal: [], price: null, shape: [], style: [], carat: null });
+        setPage(1);
+        setAllProducts([]);
+    }
 
     const handleLoadMore = () => {
-        alert("Loading more stunning designs for you...")
+        setPage(prev => prev + 1);
     }
 
     // Category-specific high-fidelity assets
@@ -155,7 +183,7 @@ export default function CategoryDetailPage() {
         }
     }
 
-    const currentData = categoryData[category] || categoryData["engagement-rings"]
+    const currentData = categoryData[categorySegment] || categoryData["engagement-rings"]
 
     return (
         <main className="bg-white min-h-screen">
@@ -165,7 +193,13 @@ export default function CategoryDetailPage() {
                     <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40">
                         <Link href="/" className="hover:text-white">Home</Link>
                         <ChevronRight className="w-3 h-3" />
-                        <span className="text-white">{displayCategory}</span>
+                        <Link href={`/${categorySegment}`} className="hover:text-white">{displayCategory}</Link>
+                        {subcategorySegment && (
+                            <>
+                                <ChevronRight className="w-3 h-3" />
+                                <span className="text-white">{displayTitle}</span>
+                            </>
+                        )}
                     </nav>
                     <div className="space-y-6">
                         <h1 className="font-serif text-5xl md:text-8xl leading-[0.9] font-light">{displayTitle}</h1>
@@ -278,51 +312,84 @@ export default function CategoryDetailPage() {
 
             {/* Total Results Count */}
             <div className="max-w-[1700px] mx-auto px-6 lg:px-12 pt-12">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 font-bold">Showing {filteredProducts.length} Results</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 font-bold">Showing {totalResults} Results</p>
             </div>
 
             {/* Results Grid */}
             <div className="max-w-[1700px] mx-auto px-6 lg:px-12 py-16 lg:py-24">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-20">
-                    {filteredProducts.map((product) => (
-                        <ProductCard
-                            key={product.id}
-                            id={product.id}
-                            name={product.name}
-                            price={product.price}
-                            imagesByMetal={product.imagesByMetal}
-                            defaultMetal={product.metal}
-                            metals={METALS}
-                        />
-                    ))}
-                </div>
+                {isLoading && page === 1 ? (
+                    <div className="flex justify-center py-40">
+                        <div className="animate-spin w-12 h-12 border-4 border-gray-200 border-t-[#163E3E] rounded-full"></div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-20">
+                            {products.map((product: any) => {
+                                // Map backend product structure to ProductCard props
+                                // Handle images: backend might return imagesByMetal (Map) or plain images array
+                                let imagesByMetal = product.imagesByMetal || {};
 
-                {filteredProducts.length === 0 && (
-                    <div className="py-40 text-center animate-in fade-in duration-500">
-                        <div className="mb-8 flex justify-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
-                                <Search className="w-8 h-8 text-gray-300" />
-                            </div>
+                                // Determine available metals
+                                // Ring has 'metals' (array), Jewelry has 'metalType' (string)
+                                const availableMetals = product.metals && product.metals.length > 0
+                                    ? product.metals
+                                    : (product.metalType ? [product.metalType] : METALS);
+
+                                if (product.images && product.images.length > 0 && Object.keys(imagesByMetal).length === 0) {
+                                    // Fallback: use first image for all available metals
+                                    availableMetals.forEach((metal: string) => {
+                                        imagesByMetal[metal] = product.images[0];
+                                    });
+                                }
+
+                                // Ensure we have at least defaults for the standard METALS if nothing else matches (failsafe)
+                                // or just rely on what we have.
+                                // If imagesByMetal is still empty (no images at all), ProductCard handles it with placeholder.
+
+                                return (
+                                    <ProductCard
+                                        key={product._id}
+                                        id={product._id}
+                                        name={product.name || product.title}
+                                        price={product.price}
+                                        imagesByMetal={imagesByMetal}
+                                        defaultMetal={availableMetals[0]}
+                                        metals={availableMetals}
+                                    />
+                                )
+                            })}
                         </div>
-                        <p className="font-serif text-3xl text-gray-400 mb-6 font-light">We couldn't find any designs <br /> matching your current filters.</p>
-                        <button
-                            onClick={clearFilters}
-                            className="bg-[#163E3E] text-white px-12 py-5 uppercase font-bold tracking-widest text-[11px] hover:bg-black transition-all"
-                        >
-                            Reset All Filters
-                        </button>
-                    </div>
-                )}
 
-                {filteredProducts.length > 0 && (
-                    <div className="mt-40 text-center">
-                        <button
-                            onClick={handleLoadMore}
-                            className="bg-white border border-gray-200 text-[#163E3E] px-24 py-6 uppercase font-bold tracking-[0.3em] text-[11px] hover:bg-[#163E3E] hover:text-white transition-all shadow-xl"
-                        >
-                            Load More Designs
-                        </button>
-                    </div>
+                        {!isLoading && products.length === 0 && (
+                            <div className="py-40 text-center animate-in fade-in duration-500">
+                                <div className="mb-8 flex justify-center">
+                                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
+                                        <Search className="w-8 h-8 text-gray-300" />
+                                    </div>
+                                </div>
+                                <p className="font-serif text-3xl text-gray-400 mb-6 font-light">We couldn't find any designs <br /> matching your current filters.</p>
+                                <button
+                                    onClick={clearFilters}
+                                    className="bg-[#163E3E] text-white px-12 py-5 uppercase font-bold tracking-widest text-[11px] hover:bg-black transition-all"
+                                >
+                                    Reset All Filters
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Load More Button - Logic for pagination check */}
+                        {data?.pagination && page < data.pagination.pages && (
+                            <div className="mt-40 text-center">
+                                <button
+                                    onClick={handleLoadMore}
+                                    disabled={isFetching}
+                                    className="bg-white border border-gray-200 text-[#163E3E] px-24 py-6 uppercase font-bold tracking-[0.3em] text-[11px] hover:bg-[#163E3E] hover:text-white transition-all shadow-xl disabled:opacity-50"
+                                >
+                                    {isFetching ? "Loading..." : "Load More Designs"}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

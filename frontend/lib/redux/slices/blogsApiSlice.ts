@@ -22,7 +22,7 @@ export const blogsApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ['Blog'],
         }),
         updateBlog: builder.mutation({
-            query: ({ id, ...data }) => ({
+            query: ({ id, data }) => ({
                 url: `/blogs/${id}`,
                 method: 'PATCH',
                 body: data,

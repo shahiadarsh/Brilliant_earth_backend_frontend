@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import {
   ShoppingBag, Heart, Search, User, Menu, X, Monitor,
   Diamond, Gem, Circle, Square, Triangle, Hexagon,
@@ -25,27 +26,27 @@ const menuData: any = {
             title: "DESIGN YOUR OWN ENGAGEMENT RING",
             type: "icon-list",
             items: [
-              { label: "Start with a Setting", icon: <Diamond strokeWidth={1} className="w-8 h-8" />, href: "/design/setting" },
-              { label: "Start with a Natural Diamond", icon: <Gem strokeWidth={1} className="w-8 h-8" />, href: "/design/diamond?type=natural" },
-              { label: "Start with a Lab Grown Diamond", icon: <Sparkles strokeWidth={1} className="w-8 h-8" />, href: "/design/diamond?type=lab" },
-              { label: "Start with a Gemstone", icon: <Gem strokeWidth={1} className="w-8 h-8 text-blue-300" />, href: "/design/gemstone" },
-              { label: "Start with a Bridal Set", icon: <Crown strokeWidth={1} className="w-8 h-8" />, href: "/design/bridal" },
+              { label: "Start with a Setting", icon: <Diamond strokeWidth={1} className="w-5 h-5" />, href: "/design/setting" },
+              { label: "Start with a Natural Diamond", icon: <Gem strokeWidth={1} className="w-5 h-5" />, href: "/design/diamond?type=natural" },
+              { label: "Start with a Lab Grown Diamond", icon: <Sparkles strokeWidth={1} className="w-5 h-5" />, href: "/design/diamond?type=lab" },
+              { label: "Start with a Gemstone", icon: <Gem strokeWidth={1} className="w-5 h-5 text-blue-300" />, href: "/design/gemstone" },
+              { label: "Start with a Bridal Set", icon: <Crown strokeWidth={1} className="w-5 h-5" />, href: "/design/bridal-set" },
             ]
           },
           {
             title: "SHOP BY SHAPE",
             type: "grid-icons",
             items: [
-              { label: "Oval", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-[50%] flex-shrink-0" /> },
-              { label: "Emerald", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-[2px] flex-shrink-0" /> },
-              { label: "Round", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex-shrink-0" /> },
-              { label: "Pear", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-b-full rounded-t-[70%] flex-shrink-0" /> },
-              { label: "Asscher", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-[4px] rotate-45 flex-shrink-0" /> },
-              { label: "Marquise", icon: <div className="w-4 h-8 border-2 border-gray-300 rounded-[50%] flex-shrink-0" /> },
-              { label: "Radiant", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-[4px] flex-shrink-0" /> },
-              { label: "Cushion", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-[8px] flex-shrink-0" /> },
-              { label: "Princess", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-[1px] flex-shrink-0 rotate-45" /> },
-              { label: "Heart", icon: <HeartShape className="w-6 h-6 text-gray-300" /> },
+              { label: "Oval", icon: <div className="w-4 h-6 border-[1.5px] border-gray-300 rounded-[50%] flex-shrink-0" /> },
+              { label: "Marquise", icon: <div className="w-3 h-7 border-[1.5px] border-gray-300 rounded-[50%] flex-shrink-0" /> },
+              { label: "Emerald", icon: <div className="w-4 h-6 border-[1.5px] border-gray-300 rounded-[2px] flex-shrink-0" /> },
+              { label: "Radiant", icon: <div className="w-4 h-6 border-[1.5px] border-gray-300 rounded-[4px] flex-shrink-0" /> },
+              { label: "Round", icon: <div className="w-5 h-5 border-[1.5px] border-gray-300 rounded-full flex-shrink-0" /> },
+              { label: "Cushion", icon: <div className="w-5 h-5 border-[1.5px] border-gray-300 rounded-[6px] flex-shrink-0" /> },
+              { label: "Pear", icon: <div className="w-4 h-6 border-[1.5px] border-gray-300 rounded-b-full rounded-t-[70%] flex-shrink-0" /> },
+              { label: "Princess", icon: <div className="w-5 h-5 border-[1.5px] border-gray-300 rounded-[1px] flex-shrink-0 rotate-45" /> },
+              { label: "Asscher", icon: <div className="w-5 h-5 border-[1.5px] border-gray-300 rounded-[4px] rotate-45 flex-shrink-0" /> },
+              { label: "Heart", icon: <HeartShape className="w-5 h-5 text-gray-300" /> },
             ],
             bottomLink: "Shop All Engagement Rings >"
           }
@@ -77,25 +78,25 @@ const menuData: any = {
       {
         groups: [
           {
-            title: "THE Ritzin DIFFERENCE",
+            title: "THE BRILLIANT EARTH DIFFERENCE",
             type: "list",
             items: [
-              { label: "We've Got You Covered", href: "/info/warranty" },
-              { label: "Diamond Transparency", href: "/info/diamond-transparency" },
-              { label: "Repurposed Gold", href: "/info/repurposed-gold" },
-              { label: "20 Years of Diamond Innovation", href: "/about" },
-              { label: "Our Mission", href: "/info/our-mission" }
+              "We've Got You Covered",
+              "Diamond Transparency",
+              "Repurposed Gold",
+              "20 Years of Diamond Innovation",
+              "Our Mission"
             ]
           },
           {
             title: "ENGAGEMENT RING GUIDES",
             type: "list",
             items: [
-              { label: "Engagement Ring Styles & Setting Types", href: "/guides/engagement-ring-styles" },
-              { label: "How Much to Spend on an Engagement Ring", href: "/guides/how-much-to-spend" },
-              { label: "Platinum vs. Gold", href: "/guides/platinum-vs-gold" },
-              { label: "Free Ring Sizer", href: "/guides/ring-sizer" },
-              { label: "Engagement Ring Trends 2026", href: "/guides/trends-2026" }
+              "Engagement Ring Styles & Setting Types",
+              "How Much to Spend on an Engagement Ring",
+              "Platinum vs. Gold",
+              "Free Ring Sizer",
+              "Engagement Ring Trends 2026"
             ]
           }
         ]
@@ -106,6 +107,79 @@ const menuData: any = {
       title: "ENDS SOON!",
       text: "1/4 CARAT LAB DIAMOND STUDS WITH PURCHASE OVER $1,000.",
       code: "USE CODE STUDS IN CART.*",
+      linkText: "Shop Now"
+    }
+  },
+  "DIAMONDS": {
+    columns: [
+      {
+        groups: [
+          {
+            title: "DESIGN YOUR OWN DIAMOND",
+            type: "icon-list",
+            items: [
+              { label: "Start with a Setting", icon: <Diamond strokeWidth={1} className="w-8 h-8" />, href: "/design/setting" },
+              { label: "Start with a Natural Diamond", icon: <Gem strokeWidth={1} className="w-8 h-8" />, href: "/design/diamond?type=natural" },
+              { label: "Start with a Lab Grown Diamond", icon: <Sparkles strokeWidth={1} className="w-8 h-8" />, href: "/design/diamond?type=lab" },
+            ]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "SHOP DIAMONDS BY SHAPE",
+            type: "grid-icons",
+            items: [
+              { label: "Oval", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-[50%] flex-shrink-0" /> },
+              { label: "Emerald", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-[2px] flex-shrink-0" /> },
+              { label: "Round", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-full flex-shrink-0" /> },
+              { label: "Pear", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-b-full rounded-t-[70%] flex-shrink-0" /> },
+              { label: "Asscher", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-[4px] rotate-45 flex-shrink-0" /> },
+              { label: "Marquise", icon: <div className="w-4 h-8 border-2 border-gray-300 rounded-[50%] flex-shrink-0" /> },
+              { label: "Radiant", icon: <div className="w-5 h-7 border-2 border-gray-300 rounded-[4px] flex-shrink-0" /> },
+              { label: "Cushion", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-[8px] flex-shrink-0" /> },
+              { label: "Princess", icon: <div className="w-6 h-6 border-2 border-gray-300 rounded-[1px] flex-shrink-0 rotate-45" /> },
+              { label: "Heart", icon: <HeartShape className="w-6 h-6 text-gray-300" /> },
+            ],
+            bottomLink: "Shop All Diamonds >"
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "SHOP BY TYPE",
+            type: "list",
+            items: ["Natural Diamonds", "Lab-Grown Diamonds", "Fancy Color Diamonds", "Certified Diamonds"]
+          },
+          {
+            title: "SHOP BY CARAT",
+            type: "list",
+            items: ["Under 1 Carat", "1-2 Carats", "2-3 Carats", "3+ Carats"]
+          }
+        ]
+      },
+      {
+        groups: [
+          {
+            title: "DIAMOND GUIDES",
+            type: "list",
+            items: [
+              { label: "Diamond Buying Guide", href: "/guides/diamond-buying" },
+              { label: "4 C's of Diamonds", href: "/guides/4cs" },
+              { label: "Lab vs Natural Diamonds", href: "/guides/lab-vs-natural" },
+              { label: "Diamond Shapes Guide", href: "/guides/diamond-shapes" },
+              { label: "Diamond Certification", href: "/guides/certification" }
+            ]
+          }
+        ]
+      }
+    ],
+    promo: {
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=400&h=500",
+      title: "LAB DIAMONDS",
+      text: "SAVE UP TO 40% ON LAB-GROWN DIAMONDS",
       linkText: "Shop Now"
     }
   },
@@ -170,81 +244,6 @@ const menuData: any = {
       linkText: "Shop Now"
     }
   },
-  "DIAMONDS": {
-    columns: [
-      {
-        groups: [
-          {
-            title: "SHOP DIAMONDS",
-            type: "list",
-            items: [],
-            topLinks: ["Shop Natural Diamonds >", "Shop Lab Grown Diamonds >"]
-          },
-          {
-            title: "DESIGN YOUR OWN RING",
-            type: "icon-list",
-            items: [
-              { label: "Start with a Natural Diamond", icon: <Gem strokeWidth={1.2} className="w-7 h-7" />, href: "/design/diamond?type=natural" },
-              { label: "Start with a Lab Diamond", icon: <Sparkles strokeWidth={1.2} className="w-7 h-7" />, href: "/design/diamond?type=lab" },
-              { label: "Start with a Setting", icon: <Diamond strokeWidth={1.2} className="w-7 h-7" />, href: "/design/setting" },
-            ]
-          }
-        ]
-      },
-      {
-        groups: [
-          {
-            title: "SHOP DIAMONDS BY SHAPE",
-            type: "grid-icons",
-            items: [
-              { label: "Round", icon: <Circle className="w-3.5 h-3.5" /> },
-              { label: "Oval", icon: <Circle className="w-3.5 h-3.5 scale-y-75" /> },
-              { label: "Cushion", icon: <Square className="w-3.5 h-3.5 rounded-sm" /> },
-              { label: "Pear", icon: <Droplet className="w-3.5 h-3.5" /> },
-              { label: "Princess", icon: <Square className="w-3.5 h-3.5 rotate-45" /> },
-              { label: "Emerald", icon: <Square className="w-3.5 h-3.5 scale-x-75" /> },
-              { label: "Marquise", icon: <Triangle className="w-3.5 h-3.5 scale-x-50" /> },
-              { label: "Radiant", icon: <Octagon className="w-3.5 h-3.5" /> },
-            ]
-          }
-        ]
-      },
-      {
-        groups: [
-          {
-            title: "DIAMOND COLLECTIONS",
-            type: "list",
-            items: ["Flawless Diamonds", "Pacific Green Lab Diamonds", "Carbon Capture Lab Diamonds", "Renewable Energy Diamonds", "Blockchain Diamonds"]
-          }
-        ]
-      },
-      {
-        groups: [
-          {
-            title: "DIAMOND JEWELRY",
-            type: "list",
-            items: ["Diamond Earrings", "Diamond Necklaces", "Design Your Own Necklace", "Design Your Own Earrings", "Diamond Bracelets"]
-          },
-          {
-            title: "DIAMOND GUIDES",
-            type: "list",
-            items: [
-              { label: "Diamond Cut Guide", href: "/guides/diamond-cut" },
-              { label: "Diamond Color Guide", href: "/guides/diamond-color" },
-              { label: "Diamond Clarity Guide", href: "/guides/diamond-clarity" },
-              { label: "Diamond Carat Guide", href: "/guides/diamond-carat" }
-            ]
-          }
-        ]
-      }
-    ],
-    promo: {
-      image: "https://images.unsplash.com/photo-1599643478518-17488fbbcd75?auto=format&fit=crop&q=80&w=400&h=500",
-      title: "Pacific Green",
-      text: "LAB DIAMONDS",
-      linkText: "Shop Now"
-    }
-  },
   "GEMSTONES": {
     columns: [
       {
@@ -255,10 +254,10 @@ const menuData: any = {
             items: [
               { label: "Start with a Gemstone", icon: <Gem strokeWidth={1.2} className="w-7 h-7" />, href: "/design/gemstone" },
               { label: "Start with a Setting", icon: <Diamond strokeWidth={1.2} className="w-7 h-7" />, href: "/design/setting" },
-              { label: "Sapphire", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-blue-600/30" />, href: "/gemstones?type=sapphire" },
-              { label: "Emerald", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-green-600/30" />, href: "/gemstones?type=emerald" },
-              { label: "Moissanite", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-gray-400/30" />, href: "/gemstones?type=moissanite" },
-              { label: "Ruby", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-red-600/30" />, href: "/gemstones?type=ruby" },
+              { label: "Sapphire", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-blue-600/30" />, href: "/design/gemstone", filter: "sapphire" },
+              { label: "Emerald", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-green-600/30" />, href: "/design/gemstone", filter: "emerald" },
+              { label: "Moissanite", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-gray-400/30" />, href: "/design/gemstone", filter: "moissanite" },
+              { label: "Ruby", icon: <Gem strokeWidth={1.2} className="w-7 h-7 text-red-600/30" />, href: "/design/gemstone", filter: "ruby" },
             ],
             bottomLink: "Shop All Gemstones >"
           }
@@ -269,16 +268,26 @@ const menuData: any = {
           {
             title: "SHOP BY COLOR",
             type: "list",
-            items: ["Blue", "Green", "Pink", "Purple", "Bi-color", "Teal", "Peach"]
+            items: [
+              { label: "Blue", icon: <div className="w-3 h-3 rounded-full bg-blue-700" /> },
+              { label: "Green", icon: <div className="w-3 h-3 rounded-full bg-emerald-700" /> },
+              { label: "Pink", icon: <div className="w-3 h-3 rounded-full bg-pink-600" /> },
+              { label: "Red", icon: <div className="w-3 h-3 rounded-full bg-red-700" /> },
+              { label: "Purple", icon: <div className="w-3 h-3 rounded-full bg-purple-700" /> },
+              { label: "Yellow", icon: <div className="w-3 h-3 rounded-full bg-yellow-500" /> },
+              { label: "Peach", icon: <div className="w-3 h-3 rounded-full bg-orange-400" /> }
+            ]
           },
           {
             title: "SHOP BY SHAPE",
             type: "grid-icons",
             items: [
-              { label: "Oval", icon: <Circle className="w-3.5 h-3.5 scale-y-75" /> },
-              { label: "Round", icon: <Circle className="w-3.5 h-3.5" /> },
-              { label: "Cushion", icon: <Square className="w-3.5 h-3.5 rounded-sm" /> },
-              { label: "Emerald", icon: <Square className="w-3.5 h-3.5 scale-x-75" /> },
+              { label: "Round", icon: <div className="w-6 h-6 border-2 border-blue-400/30 rounded-full" /> },
+              { label: "Oval", icon: <div className="w-5 h-7 border-2 border-emerald-400/30 rounded-[50%]" /> },
+              { label: "Emerald", icon: <div className="w-5 h-7 border-2 border-green-500/30 rounded-[2px]" /> },
+              { label: "Cushion", icon: <div className="w-6 h-6 border-2 border-pink-400/30 rounded-[8px]" /> },
+              { label: "Pear", icon: <div className="w-5 h-7 border-2 border-blue-300/30 rounded-b-full rounded-t-[70%]" /> },
+              { label: "Princess", icon: <div className="w-6 h-6 border-2 border-red-400/30 rotate-45" /> },
             ]
           }
         ]
@@ -288,7 +297,12 @@ const menuData: any = {
           {
             title: "PRESET RINGS",
             type: "list",
-            items: ["Moissanite Engagement Rings", "Sapphire Engagement Rings", "Aquamarine Engagement Rings", "Morganite Engagement Rings"]
+            items: ["Moissanite Engagement Rings", "Sapphire Engagement Rings", "Aquamarine Engagement Rings", "Morganite Engagement Rings", "Emerald Engagement Rings"]
+          },
+          {
+            title: "PRESET RINGS BY METAL",
+            type: "list",
+            items: ["Platinum", "18K Yellow Gold", "14K White Gold", "14K Rose Gold"]
           }
         ]
       },
@@ -297,7 +311,12 @@ const menuData: any = {
           {
             title: "GEMSTONE JEWELRY",
             type: "list",
-            items: ["Birthstone Jewelry", "Cocktail Rings", "Gemstone Necklaces", "Gemstone Earrings", "Gemstone Rings", "All Gemstone Jewelry"]
+            items: ["Gemstone Necklace", "Gemstone Earrings", "Gemstone Rings", "Gemstone Bracelets", "Birthstone Jewelry"]
+          },
+          {
+            title: "SHOP BY STONE",
+            type: "list",
+            items: ["Sapphire Jewelry", "Emerald Jewelry", "Ruby Jewelry", "Moissanite Jewelry", "Aquamarine Jewelry", "Pearl Jewelry"]
           }
         ]
       }
@@ -305,7 +324,8 @@ const menuData: any = {
     promo: {
       image: "https://images.unsplash.com/photo-1600003014608-c2ccc1570a65?auto=format&fit=crop&q=80&w=400&h=500",
       title: "Bi-Color Gems",
-      linkText: "Shop Now"
+      linkText: "Shop All Gemstones",
+      href: "/design/gemstone"
     }
   },
   "JEWELRY": {
@@ -444,8 +464,8 @@ const menuData: any = {
   }
 }
 
-function IconItem({ icon, label, href }: { icon: any, label: string, href?: string }) {
-  const { clearSelection, setCurrentStep, setStartType } = useSelection()
+function IconItem({ icon, label, href, filter }: { icon: any, label: string, href?: string, filter?: string }) {
+  const { clearSelection, setCurrentStep, setStartType, setFilters } = useSelection()
   const router = useRouter()
 
   const handleClick = (e: React.MouseEvent) => {
@@ -461,15 +481,21 @@ function IconItem({ icon, label, href }: { icon: any, label: string, href?: stri
       } else if (href.includes('gemstone')) {
         setCurrentStep('gemstone')
         setStartType('gemstone')
+        if (filter) {
+          setFilters('gemstone', { color: [filter] })
+        }
+      } else if (href.includes('bridal-set')) {
+        setCurrentStep('setting')
+        setStartType('bridal-set')
       }
       router.push(href)
     }
   }
 
   return (
-    <Link href={href || "#"} onClick={handleClick} className="flex items-center gap-4 py-2 group/item">
-      <span className="text-[#333] group-hover/item:text-[#163E3E] transition-colors">{icon}</span>
-      <span className="text-[15px] text-[#333] font-normal group-hover/item:text-[#163E3E] transition-all leading-snug">
+    <Link href={href || "#"} onClick={handleClick} className="flex items-center gap-3 py-1.5 group/item transition-colors">
+      <span className="text-gray-400 group-hover/item:text-[#163E3E] transition-colors">{icon}</span>
+      <span className="text-[13px] text-gray-700 font-normal group-hover/item:text-[#163E3E] transition-all leading-snug">
         {label}
       </span>
     </Link>
@@ -477,14 +503,49 @@ function IconItem({ icon, label, href }: { icon: any, label: string, href?: stri
 }
 
 function ShapeItem({ icon, label, activeMenu }: { icon: any, label: string, activeMenu: string | null }) {
+  const { clearSelection, setCurrentStep, setStartType, setFilters } = useSelection()
+  const router = useRouter()
+
   const slug = label.toLowerCase().replace(/ /g, '-');
   const parentSlug = activeMenu?.toLowerCase().replace(/ /g, '-');
   const href = `/${parentSlug}/${slug}`;
 
+  // Check if this is from engagement rings "SHOP BY SHAPE" or diamonds "SHOP DIAMONDS BY SHAPE"
+  const isEngagementShape = activeMenu === 'ENGAGEMENT RINGS';
+  const isDiamondsShape = activeMenu === 'DIAMONDS';
+  const isGemstonesShape = activeMenu === 'GEMSTONES';
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Both ENGAGEMENT RINGS and DIAMONDS shapes navigate to /design/setting with shape filter
+    if (isEngagementShape || isDiamondsShape) {
+      e.preventDefault();
+      clearSelection();
+      setCurrentStep('setting');
+      setStartType('setting');
+      // Pre-select the shape filter on setting page
+      // This will show settings designed for this diamond shape
+      setFilters('setting', { shape: slug });
+      router.push('/design/setting');
+    } else if (isGemstonesShape) {
+      e.preventDefault();
+      clearSelection();
+      setCurrentStep('gemstone');
+      setStartType('gemstone');
+      setFilters('gemstone', { shape: [slug] });
+      router.push('/design/gemstone');
+    }
+  };
+
   return (
-    <Link href={href} className="flex items-center gap-3 py-1.5 hover:bg-gray-50 rounded transition-colors group">
-      <span className="text-gray-400 group-hover:text-[#163E3E] transition-colors scale-75 transform origin-left">{icon}</span>
-      <span className="text-[13px] text-gray-600 font-normal group-hover:text-[#163E3E] capitalize tracking-normal">{label}</span>
+    <Link
+      href={(isEngagementShape || isDiamondsShape) ? '/design/setting' : (isGemstonesShape ? '/design/gemstone' : href)}
+      onClick={handleClick}
+      className="flex items-center gap-3 py-1 group/shape transition-colors"
+    >
+      <span className="text-gray-400 group-hover/shape:text-[#163E3E] transition-colors flex-shrink-0">{icon}</span>
+      <span className="text-[13px] text-gray-700 font-normal group-hover/shape:text-[#163E3E] transition-all">
+        {label}
+      </span>
     </Link>
   )
 }
@@ -501,7 +562,7 @@ const pathMap: Record<string, string> = {
 
 export function Header() {
   const { cartCount, wishlist } = useCart()
-  const { clearSelection, setCurrentStep, setStartType } = useSelection()
+  const { clearSelection, setCurrentStep, setStartType, setFilters } = useSelection()
   const router = useRouter()
   const dispatch = useDispatch()
   const { user, isAuthenticated: isLoggedIn } = useSelector((state: RootState) => state.auth)
@@ -712,85 +773,314 @@ export function Header() {
           onMouseLeave={handleMouseLeave}
         >
           {activeMenu && menuData[activeMenu] && (
-            <div className="max-w-[1400px] mx-auto px-6 py-8">
-              <div className="flex gap-6 justify-between">
+            <div className="max-w-[1400px] mx-auto px-6 py-10">
+              <div className="flex gap-12 justify-between">
 
-                <div className="flex-1 grid grid-cols-4 xl:grid-cols-5 gap-6">
+                {/* Left Links Area (4 columns) */}
+                <div className="flex-1 grid grid-cols-4 gap-x-12 gap-y-10">
                   {menuData[activeMenu].columns.map((col: any, idx: number) => (
-                    <div key={idx} className="flex flex-col gap-6">
+                    <div key={idx} className="flex flex-col gap-10">
                       {col.groups.map((group: any, gIdx: number) => (
-                        <div key={gIdx}>
-                          <h3 className={`font-bold tracking-wider text-gray-900 uppercase mb-4 ${group.type === "icon-list" ? "text-[16px] leading-[1.3] font-serif max-w-[200px]" : "text-[11px]"
-                            }`}>
+                        <div key={gIdx} className="w-full">
+                          <h3 className="text-[10px] font-bold tracking-[0.1em] text-gray-900 uppercase mb-5">
                             {group.title}
                           </h3>
 
                           {group.topLinks && (
-                            <div className="flex flex-col gap-1.5 mb-3">
+                            <div className="flex flex-col gap-2 mb-4">
                               {group.topLinks.map((link: string, i: number) => (
-                                <Link key={i} href="#" className="text-[13px] font-medium text-gray-900 hover:text-[#163E3E] hover:underline">{link}</Link>
+                                <Link key={i} href="#" className="text-[13px] font-medium text-gray-900 hover:text-[#163E3E] hover:underline underline-offset-2 transition-all">{link}</Link>
                               ))}
                             </div>
                           )}
 
                           {group.type === "icon-list" && (
-                            <div className="flex flex-col gap-1">
-                              {group.items.map((item: any, i: number) => (
-                                <IconItem key={i} {...item} />
-                              ))}
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex flex-col gap-1.5">
+                                {group.items.map((item: any, i: number) => (
+                                  <IconItem key={i} {...item} />
+                                ))}
+                              </div>
+                              {group.bottomLink && (
+                                <Link
+                                  href={activeMenu === 'GEMSTONES' ? '/design/gemstone' : (activeMenu === 'DIAMONDS' ? '/design/diamond' : '#')}
+                                  onClick={(e) => {
+                                    if (activeMenu === 'GEMSTONES') {
+                                      e.preventDefault();
+                                      clearSelection();
+                                      setCurrentStep('gemstone');
+                                      setStartType('gemstone');
+                                      router.push('/design/gemstone');
+                                      setActiveMenu(null);
+                                    } else if (activeMenu === 'DIAMONDS') {
+                                      e.preventDefault();
+                                      clearSelection();
+                                      setCurrentStep('diamond');
+                                      setStartType('diamond');
+                                      router.push('/design/diamond');
+                                      setActiveMenu(null);
+                                    }
+                                  }}
+                                  className="text-[13px] font-semibold text-gray-900 hover:text-[#163E3E] transition-colors flex items-center gap-1 mt-2"
+                                >
+                                  {group.bottomLink}
+                                </Link>
+                              )}
                             </div>
                           )}
 
                           {group.type === "grid-icons" && (
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-2">
-                              {group.items.map((item: any, i: number) => (
-                                <ShapeItem key={i} {...item} activeMenu={activeMenu} />
-                              ))}
+                            <div className="flex flex-col gap-6">
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                {group.items.map((item: any, i: number) => (
+                                  <ShapeItem key={i} {...item} activeMenu={activeMenu} />
+                                ))}
+                              </div>
+                              {group.bottomLink && (
+                                <Link
+                                  href={activeMenu === 'GEMSTONES' ? '/design/gemstone' : (activeMenu === 'DIAMONDS' ? '/design/diamond' : (activeMenu === 'ENGAGEMENT RINGS' ? '/design/setting' : '#'))}
+                                  onClick={(e) => {
+                                    if (activeMenu === 'GEMSTONES') {
+                                      e.preventDefault();
+                                      clearSelection();
+                                      setCurrentStep('gemstone');
+                                      setStartType('gemstone');
+                                      router.push('/design/gemstone');
+                                      setActiveMenu(null);
+                                    } else if (activeMenu === 'DIAMONDS') {
+                                      e.preventDefault();
+                                      clearSelection();
+                                      setCurrentStep('diamond');
+                                      setStartType('diamond');
+                                      router.push('/design/diamond');
+                                      setActiveMenu(null);
+                                    } else if (activeMenu === 'ENGAGEMENT RINGS') {
+                                      e.preventDefault();
+                                      clearSelection();
+                                      setCurrentStep('setting');
+                                      setStartType('setting');
+                                      router.push('/design/setting');
+                                      setActiveMenu(null);
+                                    }
+                                  }}
+                                  className="text-[13px] font-semibold text-gray-900 hover:text-[#163E3E] transition-colors flex items-center gap-1 mt-2"
+                                >
+                                  {group.bottomLink}
+                                </Link>
+                              )}
                             </div>
                           )}
 
                           {group.type === "list" && (
-                            <ul className="flex flex-col gap-2">
+                            <ul className="flex flex-col gap-2.5">
                               {group.items.map((item: any, i: number) => {
                                 const label = typeof item === 'string' ? item : item.label;
-                                // Generate a slug-friendly URL
                                 const slug = label.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-').replace(/'/g, '');
                                 const parentSlug = activeMenu?.toLowerCase().replace(/ /g, '-');
-                                const href = typeof item === 'object' && item.href ? item.href : `/${parentSlug}/${slug}`;
+
+                                // Special handling for Wedding Rings Women section
+                                let href = typeof item === 'object' && item.href ? item.href : `/${parentSlug}/${slug}`;
+
+                                if (activeMenu === 'WEDDING RINGS' && group.title === 'WOMEN') {
+                                  const weddingRingsMap: Record<string, string> = {
+                                    "Women's Wedding Rings": "/wedding-rings/women",
+                                    "Design Your Own Stack": "/wedding-rings/design-your-own-stack",
+                                    "Find My Matching Ring": "/wedding-rings/find-my-matching-ring",
+                                    "Diamond Rings": "/wedding-rings/diamond-rings",
+                                    "Wedding Ring Sets": "/wedding-rings/wedding-ring-sets",
+                                    "Eternity Rings": "/wedding-rings/eternity-rings",
+                                    "Anniversary Rings": "/wedding-rings/anniversary-rings",
+                                    "Curved Rings": "/wedding-rings/curved-rings",
+                                    "Bezel Rings": "/wedding-rings/bezel-rings"
+                                  };
+                                  href = weddingRingsMap[label] || href;
+                                }
+
+                                // Special handling for Wedding Rings Men section
+                                if (activeMenu === 'WEDDING RINGS' && group.title === 'MEN') {
+                                  const mensRingsMap: Record<string, string> = {
+                                    "Men's Wedding Bands": "/wedding-rings/mens-wedding-bands",
+                                    "Classic Bands": "/wedding-rings/classic-bands",
+                                    "Men's Engagement Rings": "/wedding-rings/mens-engagement-rings",
+                                    "Customize Your Own Ring": "/wedding-rings/customize-your-own-ring",
+                                    "Diamond Bands": "/wedding-rings/mens-diamond-bands",
+                                    "Matte Bands": "/wedding-rings/matte-bands",
+                                    "Hammered Bands": "/wedding-rings/hammered-bands",
+                                    "Men's Jewelry": "/wedding-rings/mens-jewelry"
+                                  };
+                                  href = mensRingsMap[label] || href;
+                                }
+
+                                // Special handling for Wedding Rings Women By Metal section
+                                if (activeMenu === 'WEDDING RINGS' && group.title === "WOMEN'S BY METAL") {
+                                  const womenByMetalMap: Record<string, string> = {
+                                    "Platinum": "/wedding-rings/women/platinum",
+                                    "Yellow Gold": "/wedding-rings/women/yellow-gold",
+                                    "White Gold": "/wedding-rings/women/white-gold",
+                                    "Rose Gold": "/wedding-rings/women/rose-gold"
+                                  };
+                                  href = womenByMetalMap[label] || href;
+                                }
+
+                                // Special handling for Wedding Rings Men By Metal section
+                                if (activeMenu === 'WEDDING RINGS' && group.title === "MEN'S BY METAL") {
+                                  const menByMetalMap: Record<string, string> = {
+                                    "Platinum": "/wedding-rings/men/platinum",
+                                    "Yellow Gold": "/wedding-rings/men/yellow-gold",
+                                    "Tungsten": "/wedding-rings/men/tungsten",
+                                    "Meteorite": "/wedding-rings/men/meteorite",
+                                    "White Gold": "/wedding-rings/men/white-gold"
+                                  };
+                                  href = menByMetalMap[label] || href;
+                                }
+
+                                // Special handling for Jewelry section
+                                if (activeMenu === 'JEWELRY' && group.title === "JEWELRY") {
+                                  const jewelryMap: Record<string, string> = {
+                                    "Earrings": "/jewelry/earrings",
+                                    "Necklaces": "/jewelry/necklaces",
+                                    "Rings": "/jewelry/rings",
+                                    "Bracelets": "/jewelry/bracelets",
+                                    "Men's Jewelry": "/jewelry/mens",
+                                    "Lab Diamond Jewelry": "/jewelry/lab-diamond",
+                                    "Birthstone Jewelry": "/jewelry/birthstone",
+                                    "Gemstone Jewelry": "/jewelry/gemstone"
+                                  };
+                                  href = jewelryMap[label] || href;
+                                }
+
+                                // Special handling for Shop By Style section
+                                if (activeMenu === 'JEWELRY' && group.title === "SHOP BY STYLE") {
+                                  const shopByStyleMap: Record<string, string> = {
+                                    "Tennis Bracelets": "/jewelry/tennis-bracelets",
+                                    "Diamond Studs": "/jewelry/diamond-studs",
+                                    "Stacking Rings": "/jewelry/stacking-rings",
+                                    "Fashion Rings": "/jewelry/fashion-rings",
+                                    "Cocktail Rings": "/jewelry/cocktail-rings",
+                                    "Tennis Necklaces": "/jewelry/tennis-necklaces",
+                                    "Diamond Necklaces": "/jewelry/diamond-necklaces",
+                                    "Promise Rings": "/jewelry/promise-rings"
+                                  };
+                                  href = shopByStyleMap[label] || href;
+                                }
+
+                                const isEngagementStyle = activeMenu === 'ENGAGEMENT RINGS' &&
+                                  group.title === 'ENGAGEMENT RING STYLES' &&
+                                  ['Solitaire', 'Three Stone', 'Nature-Inspired', 'Hidden Halo', 'Antique & Vintage', 'Halo'].includes(label);
+
+                                const isGemstoneEngagement = activeMenu === 'ENGAGEMENT RINGS' &&
+                                  group.title === 'GEMSTONE ENGAGEMENT RINGS' &&
+                                  ['Moissanite', 'Sapphire', 'Emerald', 'Aquamarine', 'Morganite'].includes(label);
+
+                                const isGemstoneColor = activeMenu === 'GEMSTONES' &&
+                                  group.title === 'SHOP BY COLOR';
+
+                                const isGemstonePreset = activeMenu === 'GEMSTONES' &&
+                                  group.title === 'PRESET RINGS';
+
+                                const isGemstonePresetMetal = activeMenu === 'GEMSTONES' &&
+                                  group.title === 'PRESET RINGS BY METAL';
+
+                                const isGemstoneJewelry = activeMenu === 'GEMSTONES' &&
+                                  group.title === 'GEMSTONE JEWELRY';
+
+                                const isGemstoneByStone = activeMenu === 'GEMSTONES' &&
+                                  group.title === 'SHOP BY STONE';
+
+                                // --- STATIC NAVIGATION MAPPING (Like Wedding Rings Metal Flow) ---
+                                if (isGemstonePreset) {
+                                  const presetMap: Record<string, string> = {
+                                    "Moissanite Engagement Rings": "/gemstones/preset-rings/moissanite",
+                                    "Sapphire Engagement Rings": "/gemstones/preset-rings/sapphire",
+                                    "Aquamarine Engagement Rings": "/gemstones/preset-rings/aquamarine",
+                                    "Morganite Engagement Rings": "/gemstones/preset-rings/morganite",
+                                    "Emerald Engagement Rings": "/gemstones/preset-rings/emerald"
+                                  };
+                                  href = presetMap[label] || href;
+                                }
+
+                                if (isGemstonePresetMetal) {
+                                  const presetMetalMap: Record<string, string> = {
+                                    "Platinum": "/gemstones/preset-rings/platinum",
+                                    "18K Yellow Gold": "/gemstones/preset-rings/yellow-gold",
+                                    "14K White Gold": "/gemstones/preset-rings/white-gold",
+                                    "14K Rose Gold": "/gemstones/preset-rings/rose-gold"
+                                  };
+                                  href = presetMetalMap[label] || href;
+                                }
+
+                                if (isGemstoneJewelry) {
+                                  const gemstoneJewelryMap: Record<string, string> = {
+                                    "Gemstone Necklace": "/jewelry/gemstone-necklaces",
+                                    "Gemstone Earrings": "/jewelry/gemstone-earrings",
+                                    "Gemstone Rings": "/jewelry/gemstone-rings",
+                                    "Gemstone Bracelets": "/jewelry/gemstone-bracelets",
+                                    "Birthstone Jewelry": "/jewelry/birthstone"
+                                  };
+                                  href = gemstoneJewelryMap[label] || href;
+                                }
+
+                                if (isGemstoneByStone) {
+                                  const stoneJewelryMap: Record<string, string> = {
+                                    "Sapphire Jewelry": "/jewelry/gemstone/sapphire",
+                                    "Emerald Jewelry": "/jewelry/gemstone/emerald",
+                                    "Ruby Jewelry": "/jewelry/gemstone/ruby",
+                                    "Moissanite Jewelry": "/jewelry/gemstone/moissanite",
+                                    "Aquamarine Jewelry": "/jewelry/gemstone/aquamarine",
+                                    "Pearl Jewelry": "/jewelry/gemstone/pearl"
+                                  };
+                                  href = stoneJewelryMap[label] || href;
+                                }
+
+                                const handleClick = (e: React.MouseEvent) => {
+                                  if (isEngagementStyle) {
+                                    e.preventDefault();
+                                    clearSelection();
+                                    setCurrentStep('setting');
+                                    setStartType('setting');
+                                    setFilters('setting', { style: [slug] });
+                                    router.push('/design/setting');
+                                    setActiveMenu(null);
+                                  } else if (isGemstoneEngagement || isGemstoneColor) {
+                                    // ONLY these specific sections use the DESIGN FLOW
+                                    e.preventDefault();
+                                    clearSelection();
+                                    setCurrentStep('gemstone');
+                                    setStartType('gemstone');
+
+                                    if (isGemstoneColor) {
+                                      setFilters('gemstone', { color: [slug] });
+                                    } else if (isGemstoneEngagement) {
+                                      const gemType = label.split(' ')[0].toLowerCase();
+                                      setFilters('gemstone', { color: [gemType] });
+                                    }
+
+                                    router.push('/design/gemstone');
+                                    setActiveMenu(null);
+                                  } else {
+                                    // Preset Rings and Gemstone Jewelry use Regular Navigation (Static)
+                                    setActiveMenu(null);
+                                  }
+                                };
 
                                 return (
                                   <li key={i}>
-                                    <Link href={href} className="text-[13px] text-gray-600 hover:text-[#163E3E] hover:underline underline-offset-2 decoration-[#163E3E] transition-all block leading-snug">
-                                      {label}
+                                    <Link
+                                      href={isEngagementStyle ? '/design/setting' : (isGemstoneEngagement || isGemstoneColor ? '/design/gemstone' : href)}
+                                      onClick={handleClick}
+                                      className="text-[13px] text-gray-600 hover:text-[#163E3E] hover:underline underline-offset-4 decoration-[#163E3E] transition-all block leading-snug"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {typeof item === 'object' && item.icon && (
+                                          <span className="flex-shrink-0">{item.icon}</span>
+                                        )}
+                                        <span>{label}</span>
+                                      </div>
                                     </Link>
                                   </li>
                                 );
                               })}
                             </ul>
-                          )}
-
-                          {group.type === "colors" && (
-                            <ul className="flex flex-col gap-2">
-                              {group.items.map((item: any, i: number) => (
-                                <li key={i}>
-                                  <Link href="#" className="flex items-center gap-2.5 text-[13px] text-gray-600 hover:text-[#163E3E] group">
-                                    <span
-                                      className="w-3.5 h-3.5 rounded-full border border-gray-200 shadow-sm"
-                                      style={{ backgroundColor: item.color }}
-                                    ></span>
-                                    <span className="group-hover:underline underline-offset-2">{item.label}</span>
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-
-                          {group.bottomLink && (
-                            <div className="mt-4">
-                              <Link href={`/${activeMenu?.toLowerCase().replace(/ /g, '-')}`} className="text-[13px] font-bold text-gray-900 hover:text-[#163E3E] hover:underline decoration-2 underline-offset-4">
-                                {group.bottomLink}
-                              </Link>
-                            </div>
                           )}
                         </div>
                       ))}
@@ -798,26 +1088,57 @@ export function Header() {
                   ))}
                 </div>
 
+                {/* Right Promo Area - Match image content structure */}
                 {menuData[activeMenu].promo && (
-                  <div className="w-[280px] xl:w-[320px] flex-shrink-0">
-                    <div className="relative group cursor-pointer overflow-hidden bg-[#163E3E] h-full flex flex-col items-center justify-center p-8 text-center text-white">
-                      <div className="border border-white/20 w-full h-full absolute inset-2 pointer-events-none" />
+                  <div className="w-[340px] flex-shrink-0">
+                    <div className="relative h-full bg-[#163E3E] min-h-[440px] rounded-sm overflow-hidden flex flex-col items-center justify-center p-12 text-white text-center group/promo">
+                      <div className="absolute inset-0 z-0 opacity-30 group-hover/promo:scale-105 transition-transform duration-700">
+                        <Image
+                          src={menuData[activeMenu].promo.image}
+                          alt="Promo"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-[#0B2525]/40 z-10" />
 
-                      <div className="relative z-10 py-6 px-4 border border-white/30 bg-[#163E3E]/50 backdrop-blur-sm">
-                        <h4 className="text-[14px] font-bold tracking-[0.2em] mb-4 uppercase">ENDS SOON!</h4>
-                        <p className="text-[18px] font-serif leading-tight mb-6">
+                      <div className="relative z-20 flex flex-col items-center w-full">
+                        <h5 className="text-[11px] font-bold tracking-[0.2em] mb-8 uppercase opacity-90">
+                          {menuData[activeMenu].promo.title}
+                        </h5>
+
+                        <h4 className="text-[18px] xl:text-[20px] font-serif font-bold leading-tight mb-6 tracking-wide uppercase px-2">
                           {menuData[activeMenu].promo.text}
+                        </h4>
+
+                        <div className="w-full h-px bg-white/20 mb-6" />
+
+                        <p className="text-[10px] font-bold tracking-[0.15em] mb-10 opacity-90 uppercase">
+                          {menuData[activeMenu].promo.code || 'USE CODE STUDS IN CART.*'}
                         </p>
-                        <p className="text-[10px] font-bold tracking-widest mb-8 opacity-90">
-                          {menuData[activeMenu].promo.code}
-                        </p>
-                        <span className="inline-block text-[11px] font-bold border-b-2 border-white pb-0.5 hover:opacity-80 transition-opacity uppercase tracking-widest">
+
+                        <Link
+                          href={menuData[activeMenu].promo.href || "#"}
+                          onClick={(e) => {
+                            if (activeMenu === 'GEMSTONES' && menuData[activeMenu].promo.href?.includes('/design/gemstone')) {
+                              e.preventDefault();
+                              clearSelection();
+                              setCurrentStep('gemstone');
+                              setStartType('gemstone');
+                              router.push('/design/gemstone');
+                              setActiveMenu(null);
+                            } else {
+                              setActiveMenu(null);
+                            }
+                          }}
+                          className="inline-block text-[12px] font-bold border-b-[1.5px] border-white pb-0.5 hover:opacity-80 transition-opacity uppercase tracking-[0.15em]"
+                        >
                           {menuData[activeMenu].promo.linkText}
-                        </span>
+                        </Link>
                       </div>
 
-                      <div className="mt-6 text-[9px] uppercase tracking-[0.1em] opacity-60">
-                        *See Terms for Details
+                      <div className="relative z-20 text-[8px] uppercase tracking-[0.2em] opacity-40 mt-12 w-full">
+                        *See terms for details
                       </div>
                     </div>
                   </div>
@@ -987,8 +1308,8 @@ export function Header() {
               <p className="text-center font-bold text-[#163E3E]">800.691.0952</p>
             </div>
           </div>
-        </div>
-      </header>
-    </div>
+        </div >
+      </header >
+    </div >
   )
 }

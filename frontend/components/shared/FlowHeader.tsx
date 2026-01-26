@@ -5,10 +5,13 @@ import { useSelection } from '@/context/SelectionContext'
 import { Diamond, Gem, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export function FlowHeader() {
     const { currentStep, selectedSetting, selectedDiamond, startType } = useSelection()
     const router = useRouter()
+
+    const estimatedTotal = (selectedSetting?.price || 0) + (selectedDiamond?.price || 0)
 
     const steps = [
         {
@@ -23,7 +26,8 @@ export function FlowHeader() {
             label: 'Choose Setting',
             icon: <div className="relative"><span className="absolute -top-1 -right-1 w-2 h-2 bg-gray-400 rounded-full border border-white"></span><Diamond className="w-5 h-5" /></div>,
             isCompleted: !!selectedSetting,
-            isActive: currentStep === 'setting'
+            isActive: currentStep === 'setting',
+            thumbnail: selectedSetting?.image
         },
         {
             id: 'diamond',
@@ -31,7 +35,8 @@ export function FlowHeader() {
             sublabel: 'Browse Diamonds',
             icon: <Gem className="w-5 h-5" />,
             isCompleted: !!selectedDiamond,
-            isActive: currentStep === 'diamond' || currentStep === 'gemstone'
+            isActive: currentStep === 'diamond' || currentStep === 'gemstone',
+            thumbnail: selectedDiamond?.image
         },
         {
             id: 'review',
@@ -54,8 +59,8 @@ export function FlowHeader() {
 
     return (
         <div className="w-full bg-white border-b border-gray-200 z-40">
-            <div className="max-w-[1400px] mx-auto overflow-x-auto no-scrollbar">
-                <div className="flex h-[75px] min-w-[900px]">
+            <div className="max-w-[1600px] mx-auto overflow-x-auto no-scrollbar">
+                <div className="flex h-[90px] min-w-[900px]">
                     {steps.map((step, index) => (
                         <div
                             key={step.id}
@@ -82,7 +87,21 @@ export function FlowHeader() {
                                 <span className={`text-[12px] font-bold uppercase tracking-[0.2em] whitespace-nowrap ${step.isActive || step.id === 'design' ? 'text-[#163E3E]' : 'text-gray-300'}`}>
                                     {step.id === 'design' ? step.label : `${index}. ${step.label}`}
                                 </span>
-                                {step.icon && (
+
+                                {/* Show thumbnail if item is selected */}
+                                {step.thumbnail ? (
+                                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-green-500 shadow-md shrink-0">
+                                        <Image
+                                            src={step.thumbnail}
+                                            alt={step.label}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                        <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                                            <CheckCircle2 className="w-3 h-3 text-white" />
+                                        </div>
+                                    </div>
+                                ) : step.icon && (
                                     <div className={`transition-colors shrink-0 ${step.isActive ? 'text-[#163E3E]' : 'text-gray-300'}`}>
                                         {step.isCompleted ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : step.icon}
                                     </div>
@@ -106,6 +125,17 @@ export function FlowHeader() {
                             )}
                         </div>
                     ))}
+
+                    {/* Estimated Total - Right Side */}
+                    {estimatedTotal > 0 && (
+                        <div className="flex items-center gap-4 px-8 bg-[#163E3E] text-white min-w-[280px]">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] uppercase tracking-[0.3em] font-bold text-white/60">Estimated Total</span>
+                                <span className="text-[24px] font-serif">${estimatedTotal.toLocaleString()}</span>
+                            </div>
+                            <Sparkles className="w-5 h-5 text-white/40" />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

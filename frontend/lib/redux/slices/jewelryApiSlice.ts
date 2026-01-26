@@ -18,7 +18,7 @@ export const jewelryApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ['Jewelry'],
         }),
         updateJewelry: builder.mutation({
-            query: ({ id, ...data }) => ({
+            query: ({ id, data }) => ({
                 url: `/jewelry/${id}`,
                 method: 'PATCH',
                 body: data,

@@ -3,13 +3,13 @@
 import { useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { 
-  Truck, 
-  ShieldCheck, 
-  MessageSquare, 
-  Gem, 
-  MoveHorizontal, 
-  ChevronRight 
+import {
+  Truck,
+  ShieldCheck,
+  MessageSquare,
+  Gem,
+  MoveHorizontal,
+  ChevronRight
 } from "lucide-react"
 
 const guarantees = [
@@ -70,8 +70,17 @@ const missionCollections = [
   }
 ]
 
+import { useGetPublicPromosQuery } from "@/lib/redux/slices/promosApiSlice"
+
 export function AboutPagePromos() {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { data: promosData } = useGetPublicPromosQuery(undefined);
+
+  const missionCollections = Array.isArray(promosData)
+    ? promosData
+      .filter((p: any) => p.position === 'about-mission')
+      .sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0))
+    : [];
 
   const scroll = () => {
     if (scrollRef.current) {
@@ -81,26 +90,26 @@ export function AboutPagePromos() {
 
   return (
     <div className="w-full flex flex-col">
-      
-      {/* SECTION 1: Service Guarantees (Teal Bar) */}
-      <section className="bg-[#163E3E] text-white py-20 border-b border-[#1F4F4F]">
+
+      {/* SECTION 1: Service Guarantees (Clean White) */}
+      <section className="bg-white text-gray-900 py-16 border-y border-gray-100">
         <div className="max-w-[1600px] mx-auto px-6">
-          
-          <div className="text-center mb-16">
-            <h2 className="font-serif text-3xl md:text-4xl text-white tracking-wide">
+
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-3xl md:text-3xl text-gray-900 tracking-wide font-light">
               We&apos;ve Got You Covered
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12 justify-items-center">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 justify-items-center">
             {guarantees.map((item, index) => (
               <div key={index} className="flex flex-col items-center text-center group w-full">
-                {/* Glassy Icon Container */}
-                <div className="w-24 h-24 rounded-full bg-white/5 border border-white/20 flex items-center justify-center mb-6 shadow-xl backdrop-blur-[2px] transition-transform duration-300 group-hover:scale-105 group-hover:bg-white/10">
+                {/* Minimalist Icon Container */}
+                <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-5 transition-colors duration-300 group-hover:bg-[#f0f4f4] text-gray-700">
                   {item.icon}
                 </div>
-                
-                <h3 className="font-sans text-[13px] font-medium tracking-wider uppercase max-w-[160px] leading-snug">
+
+                <h3 className="font-sans text-[11px] font-bold tracking-[0.15em] uppercase max-w-[160px] leading-snug text-gray-600 group-hover:text-gray-900 transition-colors">
                   {item.title}
                 </h3>
               </div>
@@ -112,11 +121,11 @@ export function AboutPagePromos() {
 
       {/* SECTION 2: Mission Highlights (Split Layout) */}
       <section className="w-full bg-white grid grid-cols-1 lg:grid-cols-2">
-        
+
         {/* Left Side: Hero Image */}
         <div className="relative h-[500px] lg:h-auto lg:min-h-[700px] w-full order-1">
           <Image
-            src="/home/promo1.webp" 
+            src="/home/promo1.webp"
             alt="Woman looking away wearing jewelry"
             fill
             className="object-cover object-[center_20%]"
@@ -125,18 +134,18 @@ export function AboutPagePromos() {
 
         {/* Right Side: Content Area */}
         <div className="flex flex-col justify-center py-20 px-6 md:px-16 lg:px-20 bg-white order-2 overflow-hidden">
-          
+
           {/* Text Block */}
           <div className="text-center mb-20 max-w-lg mx-auto">
             <h3 className="font-sans text-[11px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-6">
               20 YEARS OF OUR MISSION
             </h3>
-            
+
             <p className="font-serif text-2xl md:text-[28px] leading-[1.6] text-gray-900 mb-8 font-light">
               From our pioneering diamond standards to our unmatched transparency, we&apos;re redefining what it means to design, craft, and experience jewelry that makes a real difference.
             </p>
 
-            <Link 
+            <Link
               href="/mission"
               className="inline-block font-sans text-[13px] font-medium underline underline-offset-4 text-gray-900 hover:text-[#163E3E] uppercase tracking-wide decoration-gray-400 hover:decoration-[#163E3E] transition-all"
             >
@@ -146,21 +155,21 @@ export function AboutPagePromos() {
 
           {/* Collections Slider */}
           <div className="relative w-full pl-2">
-            
-            <div 
+
+            <div
               ref={scrollRef}
               className="flex gap-5 overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {missionCollections.map((item, idx) => (
-                <Link 
-                  key={idx} 
-                  href={item.href}
+              {missionCollections.map((item: any, idx) => (
+                <Link
+                  key={item._id}
+                  href={item.link || "#"}
                   className="min-w-[220px] md:min-w-[260px] snap-start group flex flex-col items-center"
                 >
                   <div className="relative w-full aspect-square overflow-hidden mb-4 bg-gray-50">
                     <Image
-                      src={item.src}
+                      src={item.desktopImage}
                       alt={item.title}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -176,7 +185,7 @@ export function AboutPagePromos() {
             </div>
 
             {/* Navigation Arrow */}
-            <button 
+            <button
               onClick={scroll}
               className="absolute right-0 top-[40%] -translate-y-1/2 z-10 w-11 h-11 bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-100 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:scale-105 transition-all"
               aria-label="Next"

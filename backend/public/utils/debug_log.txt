@@ -1,0 +1,3 @@
+Connecting to: URI PRESENT
+Connected!
+Collections: categories, users, orders, diamonds, newsletters, blogs, rings, promos, gemstones, settings, jewelries

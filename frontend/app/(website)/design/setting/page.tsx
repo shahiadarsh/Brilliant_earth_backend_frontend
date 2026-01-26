@@ -19,21 +19,313 @@ const SETTING_STYLES = [
     { id: 'vintage', label: 'Vintage', image: '/home/ring7.jfif' },
 ]
 
+const DIAMOND_SHAPES = [
+    { id: 'oval', label: 'Oval', image: '/home/ring1.webp' },
+    { id: 'emerald', label: 'Emerald', image: '/home/ring2.jfif' },
+    { id: 'round', label: 'Round', image: '/home/ring3.jfif' },
+    { id: 'pear', label: 'Pear', image: '/home/ring4.jfif' },
+    { id: 'asscher', label: 'Asscher', image: '/home/ring5.jfif' },
+    { id: 'marquise', label: 'Marquise', image: '/home/ring6.jfif' },
+    { id: 'radiant', label: 'Radiant', image: '/home/ring7.jfif' },
+    { id: 'cushion', label: 'Cushion', image: '/home/ring1.webp' },
+    { id: 'princess', label: 'Princess', image: '/home/ring2.jfif' },
+    { id: 'heart', label: 'Heart', image: '/home/ring3.jfif' },
+]
+
 const SETTINGS = [
-    { id: 's1', name: "Secret Garden Diamond Ring", price: 2890, style: 'nature-inspired', label: 'AWARD WINNING', image: "/home/ring1.webp", metal: "18K Yellow Gold", rating: 4.9, reviews: 124 },
-    { id: 's2', name: "Freesia Hidden Halo Diamond Ring", price: 1290, style: 'hidden-halo', label: 'MOST LOVED', image: "/home/ring2.jfif", metal: "18K White Gold", rating: 4.8, reviews: 89 },
-    { id: 's3', name: "Nadia Diamond Ring", price: 1350, style: 'three-stone', label: 'BEST SELLER', image: "/home/ring3.jfif", metal: "Platinum", rating: 5.0, reviews: 56 },
-    { id: 's4', name: "Petite Opera Three Stone Diamond Ring", price: 1450, style: 'three-stone', image: "/home/ring4.jfif", metal: "14K Rose Gold", rating: 4.7, reviews: 42 },
-    { id: 's5', name: "Luxe Viviana Diamond Ring", price: 1850, style: 'accents', label: 'NEW', image: "/home/ring5.jfif", metal: "18K Yellow Gold", rating: 4.9, reviews: 31 },
-    { id: 's6', name: "Adira Diamond Ring", price: 1150, style: 'solitaire', image: "/home/ring6.jfif", metal: "18K White Gold", rating: 4.6, reviews: 112 },
-    { id: 's7', name: "Vintage Floral Diamond Ring", price: 2150, style: 'vintage', image: "/home/ring7.jfif", metal: "14K Rose Gold", rating: 4.9, reviews: 28 },
-    { id: 's8', name: "Classic Solitaire Ring", price: 950, style: 'solitaire', image: "/home/ring6.jfif", metal: "Platinum", rating: 4.8, reviews: 145 },
+    {
+        id: 's1',
+        name: "Secret Garden Diamond Ring",
+        price: 2890,
+        style: 'nature-inspired',
+        label: 'AWARD WINNING',
+        image: "/home/ring1.webp",
+        metal: "18K Yellow Gold",
+        rating: 4.9,
+        reviews: 124,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring1.webp',
+            'White Gold': '/home/ring1.webp',
+            'Rose Gold': '/home/ring1.webp',
+            'Platinum': '/home/ring1.webp'
+        }
+    },
+    {
+        id: 's2',
+        name: "Freesia Hidden Halo Diamond Ring",
+        price: 1290,
+        style: 'hidden-halo',
+        label: 'MOST LOVED',
+        image: "/home/ring2.jfif",
+        metal: "18K White Gold",
+        rating: 4.8,
+        reviews: 89,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring2.jfif',
+            'White Gold': '/home/ring2.jfif',
+            'Rose Gold': '/home/ring2.jfif',
+            'Platinum': '/home/ring2.jfif'
+        }
+    },
+    {
+        id: 's3',
+        name: "Nadia Diamond Ring",
+        price: 1350,
+        style: 'three-stone',
+        label: 'BEST SELLER',
+        image: "/home/ring3.jfif",
+        metal: "Platinum",
+        rating: 5.0,
+        reviews: 56,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring3.jfif',
+            'White Gold': '/home/ring3.jfif',
+            'Rose Gold': '/home/ring3.jfif',
+            'Platinum': '/home/ring3.jfif'
+        }
+    },
+    {
+        id: 's4',
+        name: "Petite Opera Three Stone Diamond Ring",
+        price: 1450,
+        style: 'three-stone',
+        image: "/home/ring4.jfif",
+        metal: "14K Rose Gold",
+        rating: 4.7,
+        reviews: 42,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring4.jfif',
+            'White Gold': '/home/ring4.jfif',
+            'Rose Gold': '/home/ring4.jfif',
+            'Platinum': '/home/ring4.jfif'
+        }
+    },
+    {
+        id: 's5',
+        name: "Luxe Viviana Diamond Ring",
+        price: 1850,
+        style: 'accents',
+        label: 'NEW',
+        image: "/home/ring5.jfif",
+        metal: "18K Yellow Gold",
+        rating: 4.9,
+        reviews: 31,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring5.jfif',
+            'White Gold': '/home/ring5.jfif',
+            'Rose Gold': '/home/ring5.jfif',
+            'Platinum': '/home/ring5.jfif'
+        }
+    },
+    {
+        id: 's6',
+        name: "Adira Diamond Ring",
+        price: 1150,
+        style: 'solitaire',
+        image: "/home/ring6.jfif",
+        metal: "18K White Gold",
+        rating: 4.6,
+        reviews: 112,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring6.jfif',
+            'White Gold': '/home/ring6.jfif',
+            'Rose Gold': '/home/ring6.jfif',
+            'Platinum': '/home/ring6.jfif'
+        }
+    },
+    {
+        id: 's7',
+        name: "Vintage Floral Diamond Ring",
+        price: 2150,
+        style: 'vintage',
+        image: "/home/ring7.jfif",
+        metal: "14K Rose Gold",
+        rating: 4.9,
+        reviews: 28,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring7.jfif',
+            'White Gold': '/home/ring7.jfif',
+            'Rose Gold': '/home/ring7.jfif',
+            'Platinum': '/home/ring7.jfif'
+        }
+    },
+    {
+        id: 's8',
+        name: "Classic Solitaire Ring",
+        price: 950,
+        style: 'solitaire',
+        image: "/home/ring6.jfif",
+        metal: "Platinum",
+        rating: 4.8,
+        reviews: 145,
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring6.jfif',
+            'White Gold': '/home/ring6.jfif',
+            'Rose Gold': '/home/ring6.jfif',
+            'Platinum': '/home/ring6.jfif'
+        }
+    },
+    // BRIDAL SETS
+    {
+        id: 'bs1',
+        name: "Nadia Diamond Ring with Aria Contoured Diamond Ring",
+        price: 2940,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring1.webp",
+        metal: "18K Yellow Gold",
+        rating: 4.9,
+        reviews: 124,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Nadia Diamond Ring",
+            weddingBand: "Aria Contoured Diamond Ring"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring1.webp',
+            'White Gold': '/home/ring1.webp',
+            'Rose Gold': '/home/ring1.webp',
+            'Platinum': '/home/ring1.webp'
+        }
+    },
+    {
+        id: 'bs2',
+        name: "Petite Twisted Vine Diamond Bridal Set",
+        price: 2240,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring2.jfif",
+        metal: "18K White Gold",
+        rating: 4.8,
+        reviews: 89,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Petite Twisted Vine Diamond Ring",
+            weddingBand: "Petite Twisted Vine Contoured Band"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring2.jfif',
+            'White Gold': '/home/ring2.jfif',
+            'Rose Gold': '/home/ring2.jfif',
+            'Platinum': '/home/ring2.jfif'
+        }
+    },
+    {
+        id: 'bs3',
+        name: "Aria Contoured Diamond Bridal Set",
+        price: 2640,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring3.jfif",
+        metal: "18K Yellow Gold",
+        rating: 5.0,
+        reviews: 156,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Aria Diamond Ring",
+            weddingBand: "Aria Contoured Band"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring3.jfif',
+            'White Gold': '/home/ring3.jfif',
+            'Rose Gold': '/home/ring3.jfif',
+            'Platinum': '/home/ring3.jfif'
+        }
+    },
+    {
+        id: 'bs4',
+        name: "Freesia Ring with Set Diamond Crown Ring",
+        price: 2080,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring4.jfif",
+        metal: "18K Yellow Gold",
+        rating: 4.7,
+        reviews: 98,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Freesia Hidden Halo Ring",
+            weddingBand: "Set Diamond Crown Ring"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring4.jfif',
+            'White Gold': '/home/ring4.jfif',
+            'Rose Gold': '/home/ring4.jfif',
+            'Platinum': '/home/ring4.jfif'
+        }
+    },
+    {
+        id: 'bs5',
+        name: "Petite Estate Luxe Bridal Diamond Set",
+        price: 3140,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring5.jfif",
+        metal: "18K Yellow Gold",
+        rating: 4.9,
+        reviews: 142,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Petite Estate Luxe Ring",
+            weddingBand: "Petite Estate Contoured Band"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring5.jfif',
+            'White Gold': '/home/ring5.jfif',
+            'Rose Gold': '/home/ring5.jfif',
+            'Platinum': '/home/ring5.jfif'
+        }
+    },
+    {
+        id: 'bs6',
+        name: "Freesia Ring with Curved Versailles Diamond Ring",
+        price: 3040,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring6.jfif",
+        metal: "18K Yellow Gold",
+        rating: 4.8,
+        reviews: 87,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Freesia Ring",
+            weddingBand: "Curved Versailles Diamond Ring"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring6.jfif',
+            'White Gold': '/home/ring6.jfif',
+            'Rose Gold': '/home/ring6.jfif',
+            'Platinum': '/home/ring6.jfif'
+        }
+    },
+    {
+        id: 'bs7',
+        name: "Luxe Viviana Diamond Bridal Set",
+        price: 4740,
+        style: 'bridal-sets',
+        label: 'BRIDAL SET',
+        image: "/home/ring7.jfif",
+        metal: "18K White Gold",
+        rating: 5.0,
+        reviews: 203,
+        isBridalSet: true,
+        bridalSetData: {
+            engagementRing: "Luxe Viviana Diamond Ring",
+            weddingBand: "Luxe Viviana Contoured Band"
+        },
+        imagesByMetal: {
+            'Yellow Gold': '/home/ring7.jfif',
+            'White Gold': '/home/ring7.jfif',
+            'Rose Gold': '/home/ring7.jfif',
+            'Platinum': '/home/ring7.jfif'
+        }
+    }
 ]
 
 export default function SettingSelectionPage() {
     const { setSetting, setCurrentStep, selectedDiamond, filters, setFilters } = useSelection()
     const router = useRouter()
-    const [selectedMetal, setSelectedMetal] = useState('18K White Gold')
+    const [selectedMetals, setSelectedMetals] = useState<Record<string, string>>({})
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -45,12 +337,15 @@ export default function SettingSelectionPage() {
     }, [filters.setting.style])
 
     const handleSelect = (setting: any) => {
+        const metal = selectedMetals[setting.id] || setting.metal
+        const image = setting.imagesByMetal?.[metal] || setting.image
+
         setSetting({
             id: setting.id,
             name: setting.name,
             price: setting.price,
-            image: setting.image,
-            metal: selectedMetal
+            image: image,
+            metal: metal
         })
 
         if (selectedDiamond) {
@@ -105,31 +400,65 @@ export default function SettingSelectionPage() {
                         ref={scrollContainerRef}
                         className="flex overflow-x-auto no-scrollbar gap-10 pb-8 snap-x"
                     >
-                        {SETTING_STYLES.map((style) => (
-                            <button
-                                key={style.id}
-                                onClick={() => toggleStyle(style.id)}
-                                className={`flex flex-col items-center gap-5 min-w-[120px] snap-start group/style transition-all duration-500`}
-                            >
-                                <div className={`relative w-24 h-24 rounded-full overflow-hidden border-[1px] transition-all duration-500 p-1 ${filters.setting.style.includes(style.id)
+                        {/* Show shapes if user came from "Shop by Shape", otherwise show styles */}
+                        {(filters.setting as any).shape ? (
+                            // Show diamond shapes
+                            DIAMOND_SHAPES.map((shape) => (
+                                <button
+                                    key={shape.id}
+                                    onClick={() => {
+                                        // When clicking a shape, update the shape filter
+                                        setFilters('setting', { shape: shape.id });
+                                    }}
+                                    className={`flex flex-col items-center gap-5 min-w-[120px] snap-start group/style transition-all duration-500`}
+                                >
+                                    <div className={`relative w-24 h-24 rounded-full overflow-hidden border-[1px] transition-all duration-500 p-1 ${(filters.setting as any).shape === shape.id
                                         ? 'border-[#163E3E] scale-110 shadow-md'
                                         : 'border-gray-100 group-hover/style:border-gray-300'
-                                    }`}>
-                                    <div className="w-full h-full rounded-full overflow-hidden bg-gray-50">
-                                        <Image
-                                            src={style.image}
-                                            alt={style.label}
-                                            fill
-                                            className="object-cover transition-transform duration-700 group-hover/style:scale-115"
-                                        />
+                                        }`}>
+                                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-50">
+                                            <Image
+                                                src={shape.image}
+                                                alt={shape.label}
+                                                fill
+                                                className="object-cover transition-transform duration-700 group-hover/style:scale-115"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <span className={`text-[10px] uppercase tracking-[0.2em] font-bold text-center transition-colors ${filters.setting.style.includes(style.id) ? 'text-[#163E3E]' : 'text-gray-400 group-hover/style:text-gray-600'
-                                    }`}>
-                                    {style.label}
-                                </span>
-                            </button>
-                        ))}
+                                    <span className={`text-[10px] uppercase tracking-[0.2em] font-bold text-center transition-colors ${(filters.setting as any).shape === shape.id ? 'text-[#163E3E]' : 'text-gray-400 group-hover/style:text-gray-600'
+                                        }`}>
+                                        {shape.label}
+                                    </span>
+                                </button>
+                            ))
+                        ) : (
+                            // Show setting styles (default)
+                            SETTING_STYLES.map((style) => (
+                                <button
+                                    key={style.id}
+                                    onClick={() => toggleStyle(style.id)}
+                                    className={`flex flex-col items-center gap-5 min-w-[120px] snap-start group/style transition-all duration-500`}
+                                >
+                                    <div className={`relative w-24 h-24 rounded-full overflow-hidden border-[1px] transition-all duration-500 p-1 ${filters.setting.style.includes(style.id)
+                                        ? 'border-[#163E3E] scale-110 shadow-md'
+                                        : 'border-gray-100 group-hover/style:border-gray-300'
+                                        }`}>
+                                        <div className="w-full h-full rounded-full overflow-hidden bg-gray-50">
+                                            <Image
+                                                src={style.image}
+                                                alt={style.label}
+                                                fill
+                                                className="object-cover transition-transform duration-700 group-hover/style:scale-115"
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className={`text-[10px] uppercase tracking-[0.2em] font-bold text-center transition-colors ${filters.setting.style.includes(style.id) ? 'text-[#163E3E]' : 'text-gray-400 group-hover/style:text-gray-600'
+                                        }`}>
+                                        {style.label}
+                                    </span>
+                                </button>
+                            ))
+                        )}
                     </div>
 
                     <button
@@ -171,9 +500,17 @@ export default function SettingSelectionPage() {
                     {filteredSettings.map((setting) => (
                         <div key={setting.id} className="group relative flex flex-col">
                             {/* Product Card */}
-                            <div className="relative aspect-[4/5] bg-[#F9F9F9] mb-6 overflow-hidden rounded-sm cursor-pointer" onClick={() => handleSelect(setting)}>
+                            <div
+                                className="relative aspect-[4/5] bg-[#F9F9F9] mb-6 overflow-hidden rounded-sm cursor-pointer"
+                                onClick={() => {
+                                    const path = (setting as any).isBridalSet
+                                        ? `/design/bridal-set/${setting.id}`
+                                        : `/design/setting/${setting.id}`;
+                                    router.push(path);
+                                }}
+                            >
                                 <Image
-                                    src={setting.image}
+                                    src={(setting.imagesByMetal as any)?.[selectedMetals[setting.id] || setting.metal] || setting.image}
                                     alt={setting.name}
                                     fill
                                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
@@ -188,7 +525,16 @@ export default function SettingSelectionPage() {
                                 </button>
 
                                 <div className="absolute inset-x-0 bottom-0 p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-gradient-to-t from-black/20 to-transparent">
-                                    <button className="w-full bg-white text-[#163E3E] py-3.5 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl hover:bg-[#163E3E] hover:text-white transition-colors">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const path = (setting as any).isBridalSet
+                                                ? `/design/bridal-set/${setting.id}`
+                                                : `/design/setting/${setting.id}`;
+                                            router.push(path);
+                                        }}
+                                        className="w-full bg-white text-[#163E3E] py-3.5 text-[10px] font-bold uppercase tracking-[0.2em] shadow-xl hover:bg-[#163E3E] hover:text-white transition-colors"
+                                    >
                                         Quick View
                                     </button>
                                 </div>
@@ -200,11 +546,14 @@ export default function SettingSelectionPage() {
                                     {['#E5D5C5', '#E5E5E5', '#F5D5D5', '#D5D5D5'].map((color, idx) => (
                                         <div
                                             key={idx}
-                                            className="w-4 h-4 rounded-full border border-gray-200 cursor-pointer hover:scale-125 transition-transform"
+                                            className={`w-4 h-4 rounded-full border cursor-pointer hover:scale-125 transition-transform ${(selectedMetals[setting.id] || setting.metal).includes(['Yellow Gold', 'White Gold', 'Rose Gold', 'Platinum'][idx])
+                                                ? 'border-[#163E3E] border-2 shadow-md'
+                                                : 'border-gray-200'
+                                                }`}
                                             style={{ backgroundColor: color }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setSelectedMetal(['Yellow Gold', 'White Gold', 'Rose Gold', 'Platinum'][idx]);
+                                                setSelectedMetals(prev => ({ ...prev, [setting.id]: ['Yellow Gold', 'White Gold', 'Rose Gold', 'Platinum'][idx] }));
                                             }}
                                         />
                                     ))}
@@ -271,18 +620,7 @@ export default function SettingSelectionPage() {
                             <div className="flex-1 overflow-y-auto p-8 space-y-10">
                                 <div className="space-y-6">
                                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Metal Type</h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {['White Gold', 'Yellow Gold', 'Rose Gold', 'Platinum'].map(metal => (
-                                            <button
-                                                key={metal}
-                                                className={`py-3 px-4 border text-[12px] font-medium transition-all ${selectedMetal === metal ? 'border-[#163E3E] bg-[#163E3E] text-white' : 'border-gray-100 hover:border-gray-300'
-                                                    }`}
-                                                onClick={() => setSelectedMetal(metal)}
-                                            >
-                                                {metal}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <p className="text-[11px] text-gray-500 font-light">Select metal type on each ring card</p>
                                 </div>
 
                                 <div className="space-y-6">

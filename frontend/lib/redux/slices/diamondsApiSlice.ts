@@ -18,7 +18,7 @@ export const diamondsApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ['Diamond'],
         }),
         updateDiamond: builder.mutation({
-            query: ({ id, ...data }) => ({
+            query: ({ id, data }) => ({
                 url: `/diamonds/${id}`,
                 method: 'PATCH',
                 body: data,

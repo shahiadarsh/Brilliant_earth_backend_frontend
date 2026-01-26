@@ -18,7 +18,7 @@ export const gemstonesApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: ['Gemstone'],
         }),
         updateGemstone: builder.mutation({
-            query: ({ id, ...data }) => ({
+            query: ({ id, data }) => ({
                 url: `/gemstones/${id}`,
                 method: 'PATCH',
                 body: data,

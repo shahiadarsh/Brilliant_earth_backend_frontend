@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { ShieldCheck, Truck, Sparkles, Heart, ArrowLeft, ArrowRight, ShoppingBag, Info, Ruler } from 'lucide-react'
 import Link from 'next/link'
 
-const RING_SIZES = [3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9]
+const RING_SIZES = [3, 3.25, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9]
 
 export default function ReviewSelectionPage() {
     const { selectedSetting, selectedDiamond, clearSelection } = useSelection()
@@ -60,19 +60,31 @@ export default function ReviewSelectionPage() {
                     {/* Left: Component Visuals */}
                     <div className="lg:col-span-7 space-y-12">
                         <div className="relative aspect-square bg-[#F9F9F9] rounded-sm overflow-hidden group border border-gray-50 flex items-center justify-center">
+                            {/* Base Setting Image */}
                             <Image
                                 src={selectedSetting.image}
-                                alt="Custom Ring"
+                                alt="Custom Ring Setting"
                                 fill
                                 className="object-cover"
                             />
-                            <div className="absolute top-8 left-8 flex flex-col gap-3">
+                            {/* Overlay Diamond Image - Positioned in center */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                <div className="relative w-[35%] h-[35%]">
+                                    <Image
+                                        src={selectedDiamond.image}
+                                        alt="Selected Diamond"
+                                        fill
+                                        className="object-contain drop-shadow-2xl"
+                                    />
+                                </div>
+                            </div>
+                            <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
                                 <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100 flex items-center gap-2 shadow-sm">
                                     <ShieldCheck className="w-3.5 h-3.5 text-[#163E3E]" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-[#163E3E]">Insured & Certified</span>
                                 </div>
                             </div>
-                            <div className="absolute bottom-8 right-8">
+                            <div className="absolute bottom-8 right-8 z-20">
                                 <button className="p-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:scale-110 transition-transform">
                                     <Heart className="w-5 h-5 text-gray-400" />
                                 </button>
@@ -127,7 +139,14 @@ export default function ReviewSelectionPage() {
                                     <div className="space-y-2">
                                         <p className="text-[11px] uppercase font-bold tracking-widest text-[#163E3E] pb-1 border-b border-[#163E3E]/20 inline-block">The {selectedDiamond.type === 'gemstone' ? 'Gemstone' : 'Diamond'}</p>
                                         <h3 className="font-serif text-xl text-gray-900 group-hover:underline">{selectedDiamond.name}</h3>
-                                        <p className="text-[11px] font-medium text-gray-400">{selectedDiamond.shape} · Conflict-Free</p>
+                                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium text-gray-400">
+                                            {selectedDiamond.carat && <span>{selectedDiamond.carat} ct</span>}
+                                            {selectedDiamond.shape && <><span className="text-gray-200">•</span><span className="capitalize">{selectedDiamond.shape}</span></>}
+                                            {selectedDiamond.cut && <><span className="text-gray-200">•</span><span>{selectedDiamond.cut}</span></>}
+                                            {selectedDiamond.color && <><span className="text-gray-200">•</span><span>Color: {selectedDiamond.color}</span></>}
+                                            {selectedDiamond.clarity && <><span className="text-gray-200">•</span><span>Clarity: {selectedDiamond.clarity}</span></>}
+                                        </div>
+                                        <p className="text-[11px] font-medium text-gray-400">Conflict-Free</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-xl font-serif text-gray-900">${selectedDiamond.price.toLocaleString()}</p>
@@ -145,18 +164,21 @@ export default function ReviewSelectionPage() {
                                         <button className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hover:text-[#163E3E] transition-colors">Size Guide</button>
                                     </div>
                                     <div className="grid grid-cols-6 md:grid-cols-7 gap-2">
-                                        {RING_SIZES.map(size => (
-                                            <button
-                                                key={size}
-                                                onClick={() => setSelectedSize(size)}
-                                                className={`py-2 text-[12px] rounded-sm transition-all border ${selectedSize === size
-                                                    ? 'bg-[#163E3E] text-white border-[#163E3E] shadow-md'
-                                                    : 'border-gray-100 text-gray-400 hover:border-gray-300'
-                                                    }`}
-                                            >
-                                                {size}
-                                            </button>
-                                        ))}
+                                        {RING_SIZES.map(size => {
+                                            const displaySize = size === 3.25 ? '3 1/4' : size.toString()
+                                            return (
+                                                <button
+                                                    key={size}
+                                                    onClick={() => setSelectedSize(size)}
+                                                    className={`py-2 text-[12px] rounded-sm transition-all border ${selectedSize === size
+                                                        ? 'bg-[#163E3E] text-white border-[#163E3E] shadow-md'
+                                                        : 'border-gray-100 text-gray-400 hover:border-gray-300'
+                                                        }`}
+                                                >
+                                                    {displaySize}
+                                                </button>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             </div>

@@ -1,47 +1,49 @@
-import { apiSlice } from '../apiSlice';
+import { apiSlice } from "../apiSlice";
 
 export const promosApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
-        getPromos: builder.query({
-            query: (params) => ({
-                url: '/promos',
-                params,
-            }),
-            providesTags: ['Promo'],
+        // Public endpoints
+        getPublicPromos: builder.query({
+            query: () => "/public/promos",
+            transformResponse: (response: any) => response.data,
+            providesTags: ["Promo"],
         }),
-        getPromoById: builder.query({
-            query: (id) => `/promos/${id}`,
-            providesTags: ['Promo'],
+
+        // Admin endpoints
+        getAdminPromos: builder.query({
+            query: () => "/admin/management/promos",
+            transformResponse: (response: any) => response.data,
+            providesTags: ["Promo"],
         }),
         createPromo: builder.mutation({
             query: (data) => ({
-                url: '/promos',
-                method: 'POST',
+                url: "/admin/management/promos",
+                method: "POST",
                 body: data,
             }),
-            invalidatesTags: ['Promo'],
+            invalidatesTags: ["Promo"],
         }),
         updatePromo: builder.mutation({
             query: ({ id, ...data }) => ({
-                url: `/promos/${id}`,
-                method: 'PATCH',
+                url: `/admin/management/promos/${id}`,
+                method: "PUT",
                 body: data,
             }),
-            invalidatesTags: ['Promo'],
+            invalidatesTags: ["Promo"],
         }),
         deletePromo: builder.mutation({
             query: (id) => ({
-                url: `/promos/${id}`,
-                method: 'DELETE',
+                url: `/admin/management/promos/${id}`,
+                method: "DELETE",
             }),
-            invalidatesTags: ['Promo'],
+            invalidatesTags: ["Promo"],
         }),
     }),
 });
 
 export const {
-    useGetPromosQuery,
-    useGetPromoByIdQuery,
+    useGetPublicPromosQuery,
+    useGetAdminPromosQuery,
     useCreatePromoMutation,
     useUpdatePromoMutation,
     useDeletePromoMutation,
