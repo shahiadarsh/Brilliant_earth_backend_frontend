@@ -8,7 +8,7 @@ export const uploadImage = asyncHandler(async (req, res) => {
 
     res.status(200).json({
         success: true,
-        url: req.file.location, // multer-s3 adds 'location' field for the S3 URL
-        key: req.file.key
+        url: req.file.path, // Cloudinary uses 'path' for the secure URL
+        key: req.file.filename // Cloudinary uses 'filename' for public_id
     });
 });

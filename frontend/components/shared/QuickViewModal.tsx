@@ -76,7 +76,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                     <div className="space-y-2 mb-8">
                         <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">Ritzin Signature Collection</p>
                         <h2 className="font-serif text-3xl md:text-5xl text-gray-900 leading-tight">{product.name}</h2>
-                        <p className="text-2xl font-serif text-[#163E3E] mt-4">${product.price.toLocaleString()}</p>
+                        <p className="text-2xl font-serif text-[#163E3E] mt-4">${(product.price || 0).toLocaleString()}</p>
                     </div>
 
                     <div className="space-y-8 mb-12 flex-grow">

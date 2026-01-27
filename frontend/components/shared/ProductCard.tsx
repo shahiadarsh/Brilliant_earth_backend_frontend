@@ -134,7 +134,7 @@ export function ProductCard({ id, name, price, imagesByMetal, defaultMetal, meta
                 </div>
 
                 <div className="flex items-center justify-between border-t border-gray-50 pt-4">
-                    <p className="text-lg font-serif text-[#163E3E]">${price.toLocaleString()}</p>
+                    <p className="text-lg font-serif text-[#163E3E]">${(price || 0).toLocaleString()}</p>
                     <div className="flex items-center gap-1 opacity-40">
                         {[1, 2, 3, 4, 5].map(s => <div key={s} className="w-1 h-1 bg-[#163E3E] rounded-full"></div>)}
                     </div>

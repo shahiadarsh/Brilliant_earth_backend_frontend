@@ -23,6 +23,7 @@ export default function PromoManager() {
     const [editingPromo, setEditingPromo] = useState<any>(null)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<'content' | 'media' | 'actions' | 'settings'>('content')
+    const [customPosition, setCustomPosition] = useState("")
 
     const initialFormState = {
         title: "",
@@ -43,6 +44,8 @@ export default function PromoManager() {
     }
 
     const [formData, setFormData] = useState(initialFormState)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 12
 
     const handleEdit = (promo: any) => {
         setEditingPromo(promo)
@@ -55,7 +58,7 @@ export default function PromoManager() {
             buttonText: promo.buttonText || "Shop Now",
             secondaryLink: promo.secondaryLink || "",
             secondaryButtonText: promo.secondaryButtonText || "",
-            position: promo.position || "",
+            position: predefinedPositions.some(p => p.value === promo.position) ? promo.position : 'custom',
             description: promo.description || "",
             theme: promo.theme || "light",
             priority: promo.priority || 0,
@@ -63,6 +66,11 @@ export default function PromoManager() {
             startDate: promo.startDate ? new Date(promo.startDate).toISOString().split('T')[0] : "",
             endDate: promo.endDate ? new Date(promo.endDate).toISOString().split('T')[0] : ""
         })
+
+        // If the position matches one of the predefined ones, custom is empty, otherwise it's the promo position
+        const isPredefined = predefinedPositions.some(p => p.value === promo.position);
+        setCustomPosition(isPredefined ? "" : promo.position || "");
+
         setIsAddModalOpen(true)
         setActiveTab('content')
     }
@@ -107,6 +115,20 @@ export default function PromoManager() {
         e.preventDefault()
         try {
             const payload = { ...formData }
+            // Handle Position Logic
+            if (!payload.position && !customPosition) {
+                toast.error("Please select a display zone or enter a custom key");
+                return;
+            }
+
+            if (payload.position === 'custom' || !payload.position) {
+                if (!customPosition) {
+                    toast.error("Please enter a custom position key")
+                    return
+                }
+                payload.position = customPosition
+            }
+
             // Remove empty date strings to prevent DB errors if backend expects Date or null
             if (!payload.startDate) delete (payload as any).startDate
             if (!payload.endDate) delete (payload as any).endDate
@@ -175,7 +197,7 @@ export default function PromoManager() {
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {promosData?.map((promo: any) => (
+                {promosData?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((promo: any) => (
                     <div key={promo._id} className="group bg-white rounded-[24px] border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl hover:border-slate-200 transition-all duration-300 flex flex-col">
                         <div className="relative h-56 bg-slate-50 overflow-hidden">
                             {promo.desktopImage ? (
@@ -238,25 +260,48 @@ export default function PromoManager() {
                 ))}
             </div>
 
+            {/* Pagination Controls */}
+            {promosData && promosData.length > itemsPerPage && (
+                <div className="flex justify-center items-center gap-4 pt-8">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-medium text-slate-600">
+                        Page {currentPage} of {Math.ceil(promosData.length / itemsPerPage)}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(Math.ceil(promosData.length / itemsPerPage), p + 1))}
+                        disabled={currentPage === Math.ceil(promosData.length / itemsPerPage)}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
+
             {/* Premium Modal */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[32px] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-300">
+                    <div className="bg-white rounded-[24px] md:rounded-[32px] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-300">
                         {/* Modal Header */}
-                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                             <div>
-                                <h2 className="text-2xl font-serif text-slate-900">{editingPromo ? 'Edit Campaign' : 'New Campaign'}</h2>
+                                <h2 className="text-xl md:text-2xl font-serif text-slate-900">{editingPromo ? 'Edit Campaign' : 'New Campaign'}</h2>
                                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 mt-1">
                                     {editingPromo ? `ID: ${editingPromo._id.slice(-6)}` : 'Draft Mode'}
                                 </p>
                             </div>
-                            <button onClick={() => setIsAddModalOpen(false)} className="p-2.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                            <button onClick={() => setIsAddModalOpen(false)} className="p-2 md:p-2.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex px-8 border-b border-slate-100 bg-white sticky top-0 z-10">
+                        <div className="flex px-4 md:px-8 border-b border-slate-100 bg-white sticky top-0 z-10 overflow-x-auto no-scrollbar shrink-0">
                             {[
                                 { id: 'content', label: 'Narrative & Info', icon: Type },
                                 { id: 'media', label: 'Visual Assets', icon: ImageIcon },
@@ -266,7 +311,7 @@ export default function PromoManager() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`px-6 py-5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest relative transition-colors
+                                    className={`px-4 md:px-6 py-4 md:py-5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest relative transition-colors whitespace-nowrap
                                         ${activeTab === tab.id ? 'text-[#163E3E]' : 'text-slate-400 hover:text-slate-600'}
                                     `}
                                 >
@@ -278,7 +323,7 @@ export default function PromoManager() {
                         </div>
 
                         {/* Modal Body */}
-                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-white">
+                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto min-h-0 p-6 md:p-8 custom-scrollbar bg-white">
                             {/* CONTENT TAB */}
                             {activeTab === 'content' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-right-2 duration-300">
@@ -484,8 +529,10 @@ export default function PromoManager() {
                                         {formData.position === 'custom' && (
                                             <input
                                                 type="text"
-                                                placeholder="Enter custom key"
-                                                className="w-full px-5 py-3.5 mt-2 bg-slate-50 border-none rounded-xl text-sm"
+                                                placeholder="Enter custom key (e.g. sidebar-ad)"
+                                                value={customPosition}
+                                                onChange={(e) => setCustomPosition(e.target.value)}
+                                                className="w-full px-5 py-3.5 mt-2 bg-slate-50 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#163E3E]/10"
                                             />
                                         )}
                                     </div>
@@ -547,11 +594,10 @@ export default function PromoManager() {
                                     </div>
                                 </div>
                             )}
-
                         </form>
 
                         {/* Modal Footer */}
-                        <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-4">
+                        <div className="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-4 shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setIsAddModalOpen(false)}

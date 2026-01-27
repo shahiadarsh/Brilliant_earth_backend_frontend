@@ -4,18 +4,20 @@ export const ringsApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getRings: builder.query({
             query: (params) => ({
-                url: '/rings',
-                params,
+                url: '/admin/products',
+                params: { ...params, productType: 'ring' },
             }),
             providesTags: ['Ring'],
         }),
         getRing: builder.query({
-            query: (id) => `/rings/${id}`,
+            query: (id) => ({
+                url: `/admin/products/rings/${id}`,
+            }),
             providesTags: (result, error, id) => [{ type: 'Ring', id }],
         }),
         createRing: builder.mutation({
             query: (data) => ({
-                url: '/rings',
+                url: '/admin/products/rings',
                 method: 'POST',
                 body: data,
             }),
@@ -23,15 +25,15 @@ export const ringsApiSlice = apiSlice.injectEndpoints({
         }),
         updateRing: builder.mutation({
             query: ({ id, data }) => ({
-                url: `/rings/${id}`,
-                method: 'PATCH',
+                url: `/admin/products/rings/${id}`,
+                method: 'PUT',
                 body: data,
             }),
             invalidatesTags: (result, error, { id }) => ['Ring', { type: 'Ring', id }],
         }),
         deleteRing: builder.mutation({
             query: (id) => ({
-                url: `/rings/${id}`,
+                url: `/admin/products/rings/${id}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['Ring'],

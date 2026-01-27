@@ -25,6 +25,11 @@ export const getProducts = asyncHandler(async (req, res) => {
     let query = {};
     let model = Ring;
 
+    // Detect model based on route first (if no categorySlug provided overriding it)
+    if (req.originalUrl.includes('/diamonds')) model = Diamond;
+    else if (req.originalUrl.includes('/gemstones')) model = Gemstone;
+    else if (req.originalUrl.includes('/jewelry')) model = Jewelry;
+
     if (categorySlug) {
         const category = await Category.findOne({ slug: categorySlug });
         if (category) {

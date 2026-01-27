@@ -2,7 +2,7 @@ import express from 'express';
 import { getMegaMenu, getCategories } from '../controllers/categoryController.js';
 import { getProducts, getProductBySlug } from '../controllers/productController.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
-import upload from '../utils/s3Upload.js';
+import upload from '../middleware/uploadMiddleware.js';
 import {
     createRing, updateRing, deleteRing,
     createDiamond, updateDiamond, deleteDiamond,

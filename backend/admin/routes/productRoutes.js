@@ -18,11 +18,13 @@ import {
     deleteJewelry,
     bulkUpdateProducts,
     bulkDeleteProducts,
-    getProductAnalytics
+    getProductAnalytics,
+    globalSearch
 } from '../controllers/productAdminController.js';
 
 // Import Middleware
 import { protect, restrictTo } from '../../public/middleware/authMiddleware.js';
+import upload from '../../public/middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -43,6 +45,7 @@ router.use(restrictTo('admin'));
  * @query   ?productType=ring&category=xxx&metal=platinum&minPrice=1000&page=1&limit=20
  */
 router.get('/products', getAllProducts);
+router.get('/products/search/global', globalSearch);
 
 /**
  * @route   GET /api/v1/admin/products/analytics
@@ -84,14 +87,14 @@ router.get('/products/:productType/:id', getProductById);
  * @desc    Create new ring
  * @access  Admin
  */
-router.post('/products/rings', createRing);
+router.post('/products/rings', upload.array('images', 5), createRing);
 
 /**
  * @route   PUT /api/v1/admin/products/rings/:id
  * @desc    Update ring
  * @access  Admin
  */
-router.put('/products/rings/:id', updateRing);
+router.put('/products/rings/:id', upload.array('images', 5), updateRing);
 
 /**
  * @route   DELETE /api/v1/admin/products/rings/:id
@@ -109,14 +112,14 @@ router.delete('/products/rings/:id', deleteRing);
  * @desc    Create new diamond
  * @access  Admin
  */
-router.post('/products/diamonds', createDiamond);
+router.post('/products/diamonds', upload.array('images', 5), createDiamond);
 
 /**
  * @route   PUT /api/v1/admin/products/diamonds/:id
  * @desc    Update diamond
  * @access  Admin
  */
-router.put('/products/diamonds/:id', updateDiamond);
+router.put('/products/diamonds/:id', upload.array('images', 5), updateDiamond);
 
 /**
  * @route   DELETE /api/v1/admin/products/diamonds/:id
@@ -134,14 +137,14 @@ router.delete('/products/diamonds/:id', deleteDiamond);
  * @desc    Create new gemstone
  * @access  Admin
  */
-router.post('/products/gemstones', createGemstone);
+router.post('/products/gemstones', upload.array('images', 5), createGemstone);
 
 /**
  * @route   PUT /api/v1/admin/products/gemstones/:id
  * @desc    Update gemstone
  * @access  Admin
  */
-router.put('/products/gemstones/:id', updateGemstone);
+router.put('/products/gemstones/:id', upload.array('images', 5), updateGemstone);
 
 /**
  * @route   DELETE /api/v1/admin/products/gemstones/:id
@@ -159,14 +162,14 @@ router.delete('/products/gemstones/:id', deleteGemstone);
  * @desc    Create new jewelry
  * @access  Admin
  */
-router.post('/products/jewelry', createJewelry);
+router.post('/products/jewelry', upload.array('images', 5), createJewelry);
 
 /**
  * @route   PUT /api/v1/admin/products/jewelry/:id
  * @desc    Update jewelry
  * @access  Admin
  */
-router.put('/products/jewelry/:id', updateJewelry);
+router.put('/products/jewelry/:id', upload.array('images', 5), updateJewelry);
 
 /**
  * @route   DELETE /api/v1/admin/products/jewelry/:id

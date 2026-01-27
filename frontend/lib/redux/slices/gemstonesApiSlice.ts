@@ -4,14 +4,14 @@ export const gemstonesApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getGemstones: builder.query({
             query: (params) => ({
-                url: '/gemstones',
-                params,
+                url: '/admin/products',
+                params: { ...params, productType: 'gemstone' },
             }),
             providesTags: ['Gemstone'],
         }),
         createGemstone: builder.mutation({
             query: (data) => ({
-                url: '/gemstones',
+                url: '/admin/products/gemstones',
                 method: 'POST',
                 body: data,
             }),
@@ -19,15 +19,15 @@ export const gemstonesApiSlice = apiSlice.injectEndpoints({
         }),
         updateGemstone: builder.mutation({
             query: ({ id, data }) => ({
-                url: `/gemstones/${id}`,
-                method: 'PATCH',
+                url: `/admin/products/gemstones/${id}`,
+                method: 'PUT',
                 body: data,
             }),
             invalidatesTags: ['Gemstone'],
         }),
         deleteGemstone: builder.mutation({
             query: (id) => ({
-                url: `/gemstones/${id}`,
+                url: `/admin/products/gemstones/${id}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['Gemstone'],

@@ -261,7 +261,8 @@ categorySchema.methods.getBreadcrumbs = async function () {
 
 // ========== MIDDLEWARE ==========
 // Auto-generate slug before save
-categorySchema.pre('save', async function (next) {
+// Auto-generate slug before save
+categorySchema.pre('save', async function () {
     if (!this.slug || this.isModified('name')) {
         this.slug = this.generateSlug();
 
@@ -288,8 +289,6 @@ categorySchema.pre('save', async function (next) {
     if (!this.seo.twitterTitle) {
         this.seo.twitterTitle = this.seo.metaTitle;
     }
-
-    next();
 });
 
 // Update timestamps on child categories when parent is updated

@@ -81,9 +81,9 @@ export const getProducts = asyncHandler(async (req, res) => {
 
     // Price range filter
     if (minPrice || maxPrice) {
-        query.basePrice = {};
-        if (minPrice) query.basePrice.$gte = parseFloat(minPrice);
-        if (maxPrice) query.basePrice.$lte = parseFloat(maxPrice);
+        query.price = {};
+        if (minPrice) query.price.$gte = parseFloat(minPrice);
+        if (maxPrice) query.price.$lte = parseFloat(maxPrice);
     }
 
     // Carat range filter (for diamonds/gemstones)
@@ -97,10 +97,10 @@ export const getProducts = asyncHandler(async (req, res) => {
     let sortOption = {};
     switch (sort) {
         case 'price-asc':
-            sortOption = { basePrice: 1 };
+            sortOption = { price: 1 };
             break;
         case 'price-desc':
-            sortOption = { basePrice: -1 };
+            sortOption = { price: -1 };
             break;
         case 'newest':
             sortOption = { createdAt: -1 };
@@ -187,7 +187,7 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
         _id: { $ne: product._id },
         isActive: true
     })
-        .select('name slug basePrice images defaultImage')
+        .select('name slug price images defaultImage')
         .limit(8);
 
     res.json({
@@ -308,7 +308,7 @@ export const getRelatedProducts = asyncHandler(async (req, res) => {
         _id: { $ne: product._id },
         isActive: true
     })
-        .select('name slug basePrice images defaultImage isBestSeller')
+        .select('name slug price images defaultImage isBestSeller')
         .limit(parseInt(limit));
 
     res.json({
@@ -358,7 +358,7 @@ export const getBestSellers = asyncHandler(async (req, res) => {
 
     const products = await Model.find(query)
         .populate('category', 'name slug')
-        .select('name slug basePrice images defaultImage')
+        .select('name slug price images defaultImage')
         .sort({ 'analytics.salesCount': -1 })
         .limit(parseInt(limit));
 
@@ -409,7 +409,7 @@ export const getNewArrivals = asyncHandler(async (req, res) => {
 
     const products = await Model.find(query)
         .populate('category', 'name slug')
-        .select('name slug basePrice images defaultImage')
+        .select('name slug price images defaultImage')
         .sort({ createdAt: -1 })
         .limit(parseInt(limit));
 
@@ -442,8 +442,8 @@ async function getAvailableFilters(Model, baseQuery, categorySlug) {
         {
             $group: {
                 _id: null,
-                min: { $min: '$basePrice' },
-                max: { $max: '$basePrice' }
+                min: { $min: '$price' },
+                max: { $max: '$price' }
             }
         }
     ]);

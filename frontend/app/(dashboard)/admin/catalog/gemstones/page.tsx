@@ -28,6 +28,7 @@ import {
     useDeleteGemstoneMutation
 } from '@/lib/redux/slices/gemstonesApiSlice'
 import { useGetCategoriesQuery } from '@/lib/redux/slices/categoriesApiSlice'
+import { useBulkUploadMutation } from '@/lib/redux/slices/bulkUploadApiSlice'
 import { toast } from 'sonner'
 
 export default function GemstonesCatalog() {
@@ -35,12 +36,13 @@ export default function GemstonesCatalog() {
     const [filterType, setFilterType] = useState("All Varieties")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingGem, setEditingGem] = useState<any>(null)
+    const [viewingGem, setViewingGem] = useState<any>(null)
     const [modalTab, setModalTab] = useState<'specs' | 'technical' | 'seo'>('specs')
     const fileInputRef = React.useRef<HTMLInputElement>(null)
 
     // API Hooks
     const { data: gemstonesData, isLoading: isGemLoading } = useGetGemstonesQuery({
-        name: searchTerm || undefined,
+        search: searchTerm || undefined,
         type: filterType === 'All Varieties' ? undefined : filterType,
         sort: '-createdAt'
     })
@@ -49,6 +51,26 @@ export default function GemstonesCatalog() {
     const [createGemstone] = useCreateGemstoneMutation()
     const [updateGemstone] = useUpdateGemstoneMutation()
     const [deleteGemstone] = useDeleteGemstoneMutation()
+    const [bulkUpload] = useBulkUploadMutation()
+
+    const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('productType', 'gemstone')
+
+            try {
+                toast.loading("Authenticating bulk registry...")
+                await bulkUpload(formData).unwrap()
+                toast.dismiss()
+                toast.success("Bulk registry protocol complete")
+            } catch (err: any) {
+                toast.dismiss()
+                toast.error(err.data?.message || "Protocol failed: Invalid CSV structure")
+            }
+        }
+    }
 
     const allCategories = categoriesData?.data?.categories || []
 
@@ -73,7 +95,9 @@ export default function GemstonesCatalog() {
         slug: "",
         metaTitle: "",
         metaDescription: "",
-        keywords: ""
+        keywords: "",
+        priceByMetal: {} as Record<string, string>,
+        metals: [] as string[]
     })
 
     const [selectedImages, setSelectedImages] = useState<File[]>([])
@@ -127,7 +151,9 @@ export default function GemstonesCatalog() {
             slug: gem.slug || "",
             metaTitle: gem.metaTitle || "",
             metaDescription: gem.metaDescription || "",
-            keywords: gem.keywords || ""
+            keywords: gem.keywords || "",
+            priceByMetal: gem.priceByMetal || {},
+            metals: gem.metals || []
         })
         setImagePreviews(gem.images || [])
         setIsModalOpen(true)
@@ -141,7 +167,13 @@ export default function GemstonesCatalog() {
 
             Object.entries(newGem).forEach(([key, value]) => {
                 if (key === 'slug') formData.append(key, slug)
-                else formData.append(key, value)
+                else if (key === 'priceByMetal') formData.append(key, JSON.stringify(value))
+                else if (key === 'metals') {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append('metals', v))
+                    }
+                }
+                else formData.append(key, value as any)
             })
 
             selectedImages.forEach(image => formData.append('images', image))
@@ -160,7 +192,8 @@ export default function GemstonesCatalog() {
                 type: "Sapphire", color: "Royal Blue", intensity: "Vivid", shape: "Oval",
                 carat: "", origin: "Ceylon", price: "", stock: "1",
                 treatment: "Heat Treated", hardness: "9.0", clarity: "Eye Clean",
-                dimensions: "", slug: "", metaTitle: "", metaDescription: "", keywords: ""
+                dimensions: "", slug: "", metaTitle: "", metaDescription: "", keywords: "",
+                priceByMetal: {}, metals: []
             })
             setSelectedImages([])
             setImagePreviews([])
@@ -181,7 +214,7 @@ export default function GemstonesCatalog() {
                     <p className="text-slate-500 mt-2 max-w-xl font-medium">Manage rare colored gems and exotic varieties. Real-time synchronization with the master registry.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <input type="file" ref={fileInputRef} className="hidden" accept=".csv" />
+                    <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleCsvUpload} />
                     <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:border-[#163E3E] hover:text-[#163E3E] transition-all shadow-sm">
                         <FileSpreadsheet className="w-4 h-4" /> Bulk Import
                     </button>
@@ -192,7 +225,8 @@ export default function GemstonesCatalog() {
                                 type: "Sapphire", color: "Royal Blue", intensity: "Vivid", shape: "Oval",
                                 carat: "", origin: "Ceylon", price: "", stock: "1",
                                 treatment: "Heat Treated", hardness: "9.0", clarity: "Eye Clean",
-                                dimensions: "", slug: "", metaTitle: "", metaDescription: "", keywords: ""
+                                dimensions: "", slug: "", metaTitle: "", metaDescription: "", keywords: "",
+                                priceByMetal: {}, metals: []
                             })
                             setImagePreviews([])
                             setIsModalOpen(true)
@@ -305,7 +339,7 @@ export default function GemstonesCatalog() {
                                         </td>
                                         <td className="px-10 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2.5">
-                                                <button className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100"><Eye className="w-4.5 h-4.5" /></button>
+                                                <button onClick={() => setViewingGem(gem)} className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100"><Eye className="w-4.5 h-4.5" /></button>
                                                 <button
                                                     onClick={() => handleEdit(gem)}
                                                     className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100"
@@ -415,13 +449,71 @@ export default function GemstonesCatalog() {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-8">
                                                     <div className="space-y-4">
-                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">HUE/COLOR</label>
-                                                        <input required type="text" className="w-full px-7 py-5 bg-slate-50 border-none rounded-[28px] text-sm font-bold text-slate-900 outline-none shadow-sm placeholder:text-slate-300" placeholder="e.g. Royal Blue" value={newGem.color} onChange={(e) => setNewGem({ ...newGem, color: e.target.value })} />
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Price ($)</label>
+                                                        <input required type="number" className="w-full px-7 py-5 bg-slate-50 border-none rounded-[28px] text-sm font-bold text-[#163E3E] outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="0.00" value={newGem.price} onChange={(e) => setNewGem({ ...newGem, price: e.target.value })} />
                                                     </div>
                                                     <div className="space-y-4">
-                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Price per Unit ($)</label>
-                                                        <input required type="number" className="w-full px-7 py-5 bg-slate-50 border-none rounded-[28px] text-sm font-bold text-slate-900 outline-none shadow-sm placeholder:text-slate-300" placeholder="0.00" value={newGem.price} onChange={(e) => setNewGem({ ...newGem, price: e.target.value })} />
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Stock Quantity</label>
+                                                        <input required type="number" className="w-full px-7 py-5 bg-slate-50 border-none rounded-[28px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="0" value={newGem.stock} onChange={(e) => setNewGem({ ...newGem, stock: e.target.value })} />
                                                     </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Available Metals (Pre-set)</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["14K White Gold", "18K Yellow Gold", "14K Rose Gold", "Platinum", "Sterling Silver"].map((metal) => (
+                                                            <button
+                                                                key={metal}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const exists = newGem.metals.includes(metal)
+                                                                    const newMetals = exists ? newGem.metals.filter(m => m !== metal) : [...newGem.metals, metal]
+                                                                    const newPriceMap = { ...newGem.priceByMetal }
+                                                                    if (!exists && !newPriceMap[metal]) {
+                                                                        newPriceMap[metal] = newGem.price;
+                                                                    } else if (exists) {
+                                                                        delete newPriceMap[metal];
+                                                                    }
+                                                                    setNewGem({
+                                                                        ...newGem,
+                                                                        metals: newMetals,
+                                                                        priceByMetal: newPriceMap
+                                                                    })
+                                                                }}
+                                                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all shadow-sm
+                                                                     ${newGem.metals.includes(metal) ? 'bg-[#163E3E] border-[#163E3E] text-white' : 'bg-white border-slate-100 text-slate-400 hover:text-slate-600'}
+                                                                 `}
+                                                            >
+                                                                {metal}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Metal Price Inputs */}
+                                                    {newGem.metals.length > 0 && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                                            {newGem.metals.map((metal) => (
+                                                                <div key={metal} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-3">
+                                                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{metal}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] font-bold text-slate-300">$</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-20 px-2 py-1 bg-white border-none rounded-lg text-xs font-bold text-[#163E3E] outline-none shadow-sm"
+                                                                            placeholder={newGem.price}
+                                                                            value={newGem.priceByMetal[metal] || ""}
+                                                                            onChange={(e) => {
+                                                                                setNewGem({
+                                                                                    ...newGem,
+                                                                                    priceByMetal: { ...newGem.priceByMetal, [metal]: e.target.value }
+                                                                                })
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -491,6 +583,63 @@ export default function GemstonesCatalog() {
                                 <button type="submit" className="flex-1 px-12 py-5 bg-[#163E3E] text-white rounded-[32px] text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-2xl shadow-[#163E3E]/30 active:scale-95 transform">Confirm Authentication & Registry</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Modal */}
+            {viewingGem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-500" onClick={() => setViewingGem(null)}>
+                    <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-white/20" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/20">
+                            <div>
+                                <h2 className="text-2xl font-serif text-slate-900">{viewingGem.type}</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5">{viewingGem.shape} • {viewingGem.carat} Carats</p>
+                            </div>
+                            <button onClick={() => setViewingGem(null)} className="p-3 hover:bg-white rounded-2xl transition-all shadow-sm active:scale-95 border border-transparent hover:border-slate-100">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-10 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div className="aspect-[4/5] bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 relative">
+                                        <img src={viewingGem.images?.[0] || "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&q=80&w=200"} className="w-full h-full object-cover" alt="Gem" />
+                                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-[#163E3E] shadow-sm">
+                                            {viewingGem.origin}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Gem Details</p>
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: 'Color', value: viewingGem.color },
+                                                { label: 'Intensity', value: viewingGem.intensity },
+                                                { label: 'Clarity', value: viewingGem.clarity },
+                                                { label: 'Hardness', value: viewingGem.hardness },
+                                                { label: 'Treatment', value: viewingGem.treatment },
+                                                { label: 'Dimensions', value: viewingGem.dimensions }
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                                                    <span className="text-xs text-slate-500 font-medium">{item.label}</span>
+                                                    <span className="text-sm font-bold text-slate-900">{item.value || 'N/A'}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#163E3E] p-6 rounded-3xl text-white">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2">Valuation</p>
+                                        <p className="text-3xl font-serif">${viewingGem.price?.toLocaleString()}</p>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <div className={`w-2 h-2 rounded-full ${viewingGem.stock > 0 ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">{viewingGem.stock} Units Available</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

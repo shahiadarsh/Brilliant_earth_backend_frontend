@@ -39,36 +39,61 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     // Select model based on product type
     let Model;
     switch (productType) {
-        case 'ring':
-            Model = Ring;
-            break;
-        case 'diamond':
-            Model = Diamond;
-            break;
-        case 'gemstone':
-            Model = Gemstone;
-            break;
-        case 'jewelry':
-            Model = Jewelry;
-            break;
-        default:
-            Model = Ring;
+        case 'ring': Model = Ring; break;
+        case 'diamond': Model = Diamond; break;
+        case 'gemstone': Model = Gemstone; break;
+        case 'jewelry': Model = Jewelry; break;
+        default: Model = Ring;
     }
 
     // Build query
     const query = {};
 
-    if (category) query.category = category;
-    if (subcategory) query.subcategory = subcategory;
+    // Handle Category/Subcategory (Robustly handle IDs or Slugs)
+    if (category && category !== 'All Categories') {
+        if (mongoose.Types.ObjectId.isValid(category)) {
+            query.category = category;
+        } else {
+            const cat = await Category.findOne({ slug: category });
+            if (cat) query.category = cat._id;
+        }
+    }
+
+    if (subcategory && subcategory !== 'All Styles' && subcategory !== 'All Varieties') {
+        if (mongoose.Types.ObjectId.isValid(subcategory)) {
+            query.subcategory = subcategory;
+        } else {
+            const sub = await Category.findOne({ slug: subcategory });
+            if (sub) {
+                query.subcategory = sub._id;
+            } else {
+                // If it's not a category slug, maybe it's a specific style/type string
+                if (productType === 'ring') query['attributes.style'] = subcategory;
+                if (productType === 'gemstone') query['attributes.stoneType'] = subcategory;
+            }
+        }
+    }
+
     if (metal) query['attributes.metals'] = metal;
     if (shape) query['attributes.shape'] = shape;
     if (style) query['attributes.style'] = style;
     if (stoneType) query['attributes.stoneType'] = stoneType;
 
+    // Search by name or SKU
+    if (req.query.search) {
+        query.$or = [
+            { name: { $regex: req.query.search, $options: 'i' } },
+            { title: { $regex: req.query.search, $options: 'i' } },
+            { sku: { $regex: req.query.search, $options: 'i' } },
+            { 'seo.metaTitle': { $regex: req.query.search, $options: 'i' } },
+            { metaTitle: { $regex: req.query.search, $options: 'i' } }
+        ];
+    }
+
     if (minPrice || maxPrice) {
-        query.basePrice = {};
-        if (minPrice) query.basePrice.$gte = parseFloat(minPrice);
-        if (maxPrice) query.basePrice.$lte = parseFloat(maxPrice);
+        query.price = {};
+        if (minPrice) query.price.$gte = parseFloat(minPrice);
+        if (maxPrice) query.price.$lte = parseFloat(maxPrice);
     }
 
     if (isActive !== undefined) query.isActive = isActive === 'true';
@@ -92,9 +117,12 @@ export const getAllProducts = asyncHandler(async (req, res) => {
         success: true,
         count: products.length,
         total,
-        page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
-        data: products
+        data: products,
+        pagination: {
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / parseInt(limit))
+        }
     });
 });
 
@@ -150,9 +178,41 @@ export const getProductById = asyncHandler(async (req, res) => {
  * @access  Admin
  */
 export const createRing = asyncHandler(async (req, res) => {
-    // Handle file uploads
-    const images = req.files ? req.files.map(f => f.location) : [];
-    const ringData = { ...req.body, images };
+    const images = req.files ? req.files.map(f => f.path) : [];
+
+    // Parse variants if provided as string
+    let variants = req.body.variants;
+    if (typeof variants === 'string') {
+        try { variants = JSON.parse(variants); } catch (e) { variants = []; }
+    }
+
+    // Recalculate stock from variants if they exist
+    let stock = req.body.stock || 0;
+    if (variants && variants.length > 0) {
+        stock = variants.reduce((acc, v) => acc + (parseInt(v.stock) || 0), 0);
+    }
+
+    // Parse priceByMetal if provided
+    let priceByMetal = req.body.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = {}; }
+    }
+
+    // Standardize attributes
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : [],
+        prongStyle: req.body.prongStyle,
+        bandWidth: req.body.bandWidth
+    };
+
+    // SEO Structure
+    const seo = {
+        metaTitle: req.body.metaTitle,
+        metaDescription: req.body.metaDescription,
+        metaKeywords: req.body.keywords
+    };
+
+    const ringData = { ...req.body, images, variants, stock, priceByMetal, attributes, seo };
 
     // Verify category exists
     if (req.body.category) {
@@ -160,15 +220,6 @@ export const createRing = asyncHandler(async (req, res) => {
         if (!category) {
             res.status(404);
             throw new Error('Category not found');
-        }
-    }
-
-    // Verify subcategory exists
-    if (req.body.subcategory) {
-        const subcategory = await Subcategory.findById(req.body.subcategory);
-        if (!subcategory) {
-            res.status(404);
-            throw new Error('Subcategory not found');
         }
     }
 
@@ -194,15 +245,87 @@ export const updateRing = asyncHandler(async (req, res) => {
         throw new Error('Ring not found');
     }
 
-    // Handle new file uploads
-    let images = req.body.images || ring.images || [];
-    if (req.files && req.files.length > 0) {
-        images = [...images, ...req.files.map(f => f.location)];
+    // Handle images: Start with existing images if provided (parsed from JSON), else fallback to current
+    let images = ring.images;
+
+    if (req.body.existingImages) {
+        try {
+            images = JSON.parse(req.body.existingImages);
+        } catch (e) {
+            // Fallback strategy if not JSON (though frontend should send JSON)
+            images = Array.isArray(req.body.existingImages) ? req.body.existingImages : [req.body.existingImages];
+        }
     }
+
+    // Append new uploaded files
+    if (req.files && req.files.length > 0) {
+        images = [...images, ...req.files.map(f => f.path)];
+    }
+
+    // Handle variants and stock
+    let variants = req.body.variants || ring.variants;
+    if (typeof variants === 'string') {
+        try { variants = JSON.parse(variants); } catch (e) { variants = ring.variants; }
+    }
+
+    let stock = req.body.stock || ring.stock;
+    if (req.body.variants) { // Only recalculate if variants were provided in update
+        stock = variants.reduce((acc, v) => acc + (parseInt(v.stock) || 0), 0);
+    }
+
+    // Handle priceByMetal
+    let priceByMetal = req.body.priceByMetal || ring.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = ring.priceByMetal; }
+    }
+
+    // Standardize attributes
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : (ring.attributes?.metals || []),
+        prongStyle: req.body.prongStyle || ring.attributes?.prongStyle,
+        bandWidth: req.body.bandWidth || ring.attributes?.bandWidth
+    };
+
+    // SEO Structure
+    const seo = {
+        metaTitle: req.body.metaTitle || (ring.seo ? ring.seo.metaTitle : undefined),
+        metaDescription: req.body.metaDescription || (ring.seo ? ring.seo.metaDescription : undefined),
+        metaKeywords: req.body.keywords || (ring.seo ? ring.seo.metaKeywords : undefined)
+    };
+
+    // Build update object - only include fields that are actually provided
+    const updateData = {};
+
+    // Only update fields if they are provided and not empty
+    if (req.body.name) updateData.name = req.body.name;
+    if (req.body.slug) updateData.slug = req.body.slug;
+    if (req.body.price !== undefined && req.body.price !== null && req.body.price !== '') {
+        updateData.price = parseFloat(req.body.price);
+    }
+    if (req.body.stock !== undefined && req.body.stock !== null && req.body.stock !== '') {
+        updateData.stock = stock; // Use calculated stock from above
+    }
+    if (req.body.category) updateData.category = req.body.category;
+    if (req.body.subcategory) updateData.subcategory = req.body.subcategory;
+    if (req.body.collection) updateData.collection = req.body.collection;
+    if (req.body.gender) updateData.gender = req.body.gender;
+    if (req.body.description) updateData.description = req.body.description;
+    if (req.body.isSustainable !== undefined) updateData.isSustainable = req.body.isSustainable;
+    if (req.body.isActive !== undefined) updateData.isActive = req.body.isActive;
+    if (req.body.isFeatured !== undefined) updateData.isFeatured = req.body.isFeatured;
+    if (req.body.isBestSeller !== undefined) updateData.isBestSeller = req.body.isBestSeller;
+    if (req.body.stockStatus) updateData.stockStatus = req.body.stockStatus;
+
+    // Always update these if provided
+    updateData.images = images;
+    updateData.variants = variants;
+    updateData.priceByMetal = priceByMetal;
+    updateData.attributes = attributes;
+    updateData.seo = seo;
 
     ring = await Ring.findByIdAndUpdate(
         req.params.id,
-        { ...req.body, images },
+        updateData,
         { new: true, runValidators: true }
     );
 
@@ -239,8 +362,23 @@ export const deleteRing = asyncHandler(async (req, res) => {
 // ========================================
 
 export const createDiamond = asyncHandler(async (req, res) => {
-    const images = req.files ? req.files.map(f => f.location) : [];
-    const diamond = await Diamond.create({ ...req.body, images });
+    const images = req.files ? req.files.map(f => f.path) : [];
+    let priceByMetal = req.body.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = {}; }
+    }
+
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : []
+    };
+
+    const seo = {
+        metaTitle: req.body.metaTitle,
+        metaDescription: req.body.metaDescription,
+        metaKeywords: req.body.keywords
+    };
+
+    const diamond = await Diamond.create({ ...req.body, images, priceByMetal, attributes, seo });
 
     res.status(201).json({
         success: true,
@@ -257,14 +395,39 @@ export const updateDiamond = asyncHandler(async (req, res) => {
         throw new Error('Diamond not found');
     }
 
-    let images = req.body.images || diamond.images || [];
-    if (req.files && req.files.length > 0) {
-        images = [...images, ...req.files.map(f => f.location)];
+    // Handle images
+    let images = diamond.images;
+    if (req.body.existingImages) {
+        try {
+            images = JSON.parse(req.body.existingImages);
+        } catch (e) {
+            images = Array.isArray(req.body.existingImages) ? req.body.existingImages : [req.body.existingImages];
+        }
     }
+
+    // Append new uploaded files
+    if (req.files && req.files.length > 0) {
+        images = [...images, ...req.files.map(f => f.path)];
+    }
+
+    let priceByMetal = req.body.priceByMetal || diamond.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = diamond.priceByMetal; }
+    }
+
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : (diamond.attributes ? diamond.attributes.metals : [])
+    };
+
+    const seo = {
+        metaTitle: req.body.metaTitle || (diamond.seo ? diamond.seo.metaTitle : undefined),
+        metaDescription: req.body.metaDescription || (diamond.seo ? diamond.seo.metaDescription : undefined),
+        metaKeywords: req.body.keywords || (diamond.seo ? diamond.seo.metaKeywords : undefined)
+    };
 
     diamond = await Diamond.findByIdAndUpdate(
         req.params.id,
-        { ...req.body, images },
+        { ...req.body, images, priceByMetal, attributes, seo },
         { new: true, runValidators: true }
     );
 
@@ -296,8 +459,23 @@ export const deleteDiamond = asyncHandler(async (req, res) => {
 // ========================================
 
 export const createGemstone = asyncHandler(async (req, res) => {
-    const images = req.files ? req.files.map(f => f.location) : [];
-    const gemstone = await Gemstone.create({ ...req.body, images });
+    const images = req.files ? req.files.map(f => f.path) : [];
+    let priceByMetal = req.body.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = {}; }
+    }
+
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : []
+    };
+
+    const seo = {
+        metaTitle: req.body.metaTitle,
+        metaDescription: req.body.metaDescription,
+        metaKeywords: req.body.keywords
+    };
+
+    const gemstone = await Gemstone.create({ ...req.body, images, priceByMetal, attributes, seo });
 
     res.status(201).json({
         success: true,
@@ -316,12 +494,27 @@ export const updateGemstone = asyncHandler(async (req, res) => {
 
     let images = req.body.images || gemstone.images || [];
     if (req.files && req.files.length > 0) {
-        images = [...images, ...req.files.map(f => f.location)];
+        images = [...images, ...req.files.map(f => f.path)];
     }
+
+    let priceByMetal = req.body.priceByMetal || gemstone.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = gemstone.priceByMetal; }
+    }
+
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : (gemstone.attributes ? gemstone.attributes.metals : [])
+    };
+
+    const seo = {
+        metaTitle: req.body.metaTitle || (gemstone.seo ? gemstone.seo.metaTitle : undefined),
+        metaDescription: req.body.metaDescription || (gemstone.seo ? gemstone.seo.metaDescription : undefined),
+        metaKeywords: req.body.keywords || (gemstone.seo ? gemstone.seo.metaKeywords : undefined)
+    };
 
     gemstone = await Gemstone.findByIdAndUpdate(
         req.params.id,
-        { ...req.body, images },
+        { ...req.body, images, priceByMetal, attributes, seo },
         { new: true, runValidators: true }
     );
 
@@ -353,8 +546,45 @@ export const deleteGemstone = asyncHandler(async (req, res) => {
 // ========================================
 
 export const createJewelry = asyncHandler(async (req, res) => {
-    const images = req.files ? req.files.map(f => f.location) : [];
-    const jewelry = await Jewelry.create({ ...req.body, images });
+    const images = req.files ? req.files.map(f => f.path) : [];
+
+    // Variants and stock for Jewelry
+    let variants = req.body.variants;
+    if (typeof variants === 'string') {
+        try { variants = JSON.parse(variants); } catch (e) { variants = []; }
+    }
+
+    let stock = req.body.stock || 0;
+    if (variants && variants.length > 0) {
+        stock = variants.reduce((acc, v) => acc + (parseInt(v.stock) || 0), 0);
+    }
+
+    let priceByMetal = req.body.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = {}; }
+    }
+
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : [],
+        gemstoneType: req.body.gemstoneType,
+        totalWeight: req.body.totalWeight,
+        dimensions: req.body.dimensions,
+        chainLength: req.body.chainLength,
+        claspType: req.body.claspType,
+        backingType: req.body.backingType,
+        dropLength: req.body.dropLength,
+        sizeLength: req.body.sizeLength,
+        bailType: req.body.bailType,
+        chainIncluded: req.body.chainIncluded
+    };
+
+    const seo = {
+        metaTitle: req.body.metaTitle,
+        metaDescription: req.body.metaDescription,
+        metaKeywords: req.body.keywords
+    };
+
+    const jewelry = await Jewelry.create({ ...req.body, images, variants, stock, priceByMetal, attributes, seo });
 
     res.status(201).json({
         success: true,
@@ -373,12 +603,48 @@ export const updateJewelry = asyncHandler(async (req, res) => {
 
     let images = req.body.images || jewelry.images || [];
     if (req.files && req.files.length > 0) {
-        images = [...images, ...req.files.map(f => f.location)];
+        images = [...images, ...req.files.map(f => f.path)];
     }
+
+    // Variants and stock for Jewelry update
+    let variants = req.body.variants || jewelry.variants;
+    if (typeof variants === 'string') {
+        try { variants = JSON.parse(variants); } catch (e) { variants = jewelry.variants; }
+    }
+
+    let stock = req.body.stock || jewelry.stock;
+    if (req.body.variants) {
+        stock = variants.reduce((acc, v) => acc + (parseInt(v.stock) || 0), 0);
+    }
+
+    let priceByMetal = req.body.priceByMetal || jewelry.priceByMetal;
+    if (typeof priceByMetal === 'string') {
+        try { priceByMetal = JSON.parse(priceByMetal); } catch (e) { priceByMetal = jewelry.priceByMetal; }
+    }
+
+    const attributes = {
+        metals: req.body.metals ? (Array.isArray(req.body.metals) ? req.body.metals : [req.body.metals]) : (jewelry.attributes ? jewelry.attributes.metals : []),
+        gemstoneType: req.body.gemstoneType || (jewelry.attributes ? jewelry.attributes.gemstoneType : undefined),
+        totalWeight: req.body.totalWeight || (jewelry.attributes ? jewelry.attributes.totalWeight : undefined),
+        dimensions: req.body.dimensions || (jewelry.attributes ? jewelry.attributes.dimensions : undefined),
+        chainLength: req.body.chainLength || (jewelry.attributes ? jewelry.attributes.chainLength : undefined),
+        claspType: req.body.claspType || (jewelry.attributes ? jewelry.attributes.claspType : undefined),
+        backingType: req.body.backingType || (jewelry.attributes ? jewelry.attributes.backingType : undefined),
+        dropLength: req.body.dropLength || (jewelry.attributes ? jewelry.attributes.dropLength : undefined),
+        sizeLength: req.body.sizeLength || (jewelry.attributes ? jewelry.attributes.sizeLength : undefined),
+        bailType: req.body.bailType || (jewelry.attributes ? jewelry.attributes.bailType : undefined),
+        chainIncluded: req.body.chainIncluded || (jewelry.attributes ? jewelry.attributes.chainIncluded : undefined)
+    };
+
+    const seo = {
+        metaTitle: req.body.metaTitle || (jewelry.seo ? jewelry.seo.metaTitle : undefined),
+        metaDescription: req.body.metaDescription || (jewelry.seo ? jewelry.seo.metaDescription : undefined),
+        metaKeywords: req.body.keywords || (jewelry.seo ? jewelry.seo.metaKeywords : undefined)
+    };
 
     jewelry = await Jewelry.findByIdAndUpdate(
         req.params.id,
-        { ...req.body, images },
+        { ...req.body, images, variants, stock, priceByMetal, attributes, seo },
         { new: true, runValidators: true }
     );
 
@@ -536,13 +802,13 @@ export const getProductAnalytics = asyncHandler(async (req, res) => {
 
     // Get top viewed products
     const topViewed = await Model.find({ isActive: true })
-        .select('name slug analytics.viewCount basePrice')
+        .select('name slug analytics.viewCount price')
         .sort({ 'analytics.viewCount': -1 })
         .limit(10);
 
     // Get top selling products
     const topSelling = await Model.find({ isActive: true })
-        .select('name slug analytics.salesCount basePrice')
+        .select('name slug analytics.salesCount price')
         .sort({ 'analytics.salesCount': -1 })
         .limit(10);
 
@@ -557,5 +823,48 @@ export const getProductAnalytics = asyncHandler(async (req, res) => {
             topViewed,
             topSelling
         }
+    });
+});
+
+/**
+ * @desc    Global search across all product models
+ * @route   GET /api/v1/admin/products/search/global
+ * @access  Admin
+ */
+export const globalSearch = asyncHandler(async (req, res) => {
+    const { search } = req.query;
+
+    if (!search) {
+        return res.json({ success: true, count: 0, data: [] });
+    }
+
+    const regex = { $regex: search, $options: 'i' };
+    const query = {
+        $or: [
+            { name: regex },
+            { sku: regex },
+            { 'seo.metaTitle': regex }
+        ]
+    };
+
+    // Parallel search across all models
+    const [rings, diamonds, gemstones, jewelry] = await Promise.all([
+        Ring.find(query).limit(5).populate('category', 'name'),
+        Diamond.find({ $or: [{ certNumber: regex }, { shape: regex }] }).limit(5),
+        Gemstone.find(query).limit(5),
+        Jewelry.find(query).limit(5)
+    ]);
+
+    const results = [
+        ...rings.map(r => ({ ...r._doc, type: 'ring' })),
+        ...diamonds.map(d => ({ ...d._doc, type: 'diamond' })),
+        ...gemstones.map(g => ({ ...g._doc, type: 'gemstone' })),
+        ...jewelry.map(j => ({ ...j._doc, type: 'jewelry' }))
+    ];
+
+    res.json({
+        success: true,
+        count: results.length,
+        data: results
     });
 });

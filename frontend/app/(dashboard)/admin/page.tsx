@@ -11,6 +11,7 @@ import {
     TrendingDown,
     AlertTriangle,
     Plus,
+    PlusCircle,
     Eye,
     ArrowRight,
     Calendar,
@@ -44,23 +45,28 @@ export default function AdminDashboard() {
 
     const fetchDashboardStats = async () => {
         try {
-            // TODO: Replace with actual API calls
-            // const response = await fetch('/api/v1/admin/dashboard/stats')
-            // const data = await response.json()
+            const response = await fetch('/api/v1/admin/management/dashboard/stats')
+            const result = await response.json()
 
-            // Mock data for now
-            setStats({
-                products: { total: 245, change: 12 },
-                categories: { total: 12, change: 2 },
-                orders: { total: 48, change: 5 },
-                revenue: { total: 12450, change: 8.5 }
-            })
+            if (result.success) {
+                const { counts, alerts, recentOrders, recentUsers } = result.data
+                setStats({
+                    products: { total: (counts.rings || 0) + (counts.diamonds || 0), change: 0 },
+                    categories: { total: counts.users || 0, change: 0 }, // Using users count for now as placeholder
+                    orders: { total: counts.orders || 0, change: 0 },
+                    revenue: { total: counts.revenue || 0, change: 0 }
+                })
+                // We'll pass the rest of the data to sub-components
+                setDashboardData(result.data)
+            }
             setLoading(false)
         } catch (error) {
             console.error('Error fetching stats:', error)
             setLoading(false)
         }
     }
+
+    const [dashboardData, setDashboardData] = useState<any>(null)
 
     return (
         <div className="space-y-8">
@@ -126,142 +132,100 @@ export default function AdminDashboard() {
                 {/* Left Column - 2/3 width */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Sales Chart */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                    <Card className="border-slate-100 shadow-sm overflow-hidden">
+                        <CardHeader className="bg-slate-50/50">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <Activity className="w-5 h-5 text-blue-500" />
-                                Sales Overview
+                                Growth Analysis
                             </CardTitle>
-                            <CardDescription>Your sales performance this week</CardDescription>
+                            <CardDescription>Visual representation of your performance</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="h-[300px] flex items-center justify-center bg-slate-50 rounded-lg">
-                                <p className="text-slate-400">Chart will be rendered here</p>
+                        <CardContent className="p-0">
+                            <div className="h-[350px] flex items-center justify-center bg-white relative">
+                                <div className="absolute inset-x-8 inset-y-12 bg-slate-50 rounded-[32px] border border-dashed border-slate-200 flex items-center justify-center">
+                                    <p className="text-slate-400 text-sm font-medium">Analytics Engine Visualizing Data...</p>
+                                </div>
                                 {/* TODO: Add Recharts Line Chart */}
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Recent Products */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
+                    {/* Recent Orders */}
+                    <Card className="border-slate-100 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50">
                             <div>
-                                <CardTitle>Recent Products</CardTitle>
-                                <CardDescription>Latest products added to inventory</CardDescription>
+                                <CardTitle className="text-lg">Recent Orders</CardTitle>
+                                <CardDescription>Latest transactions in your store</CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm" asChild>
-                                <Link href="/admin/catalog/rings">
+                            <Button variant="ghost" size="sm" asChild className="rounded-xl">
+                                <Link href="/admin/orders">
                                     View All
                                     <ArrowRight className="w-4 h-4 ml-2" />
                                 </Link>
                             </Button>
                         </CardHeader>
-                        <CardContent>
-                            <RecentProductsList />
+                        <CardContent className="pt-6">
+                            <RecentOrdersList orders={dashboardData?.recentOrders} />
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Right Column - 1/3 width */}
                 <div className="space-y-6">
+                    {/* New Signups */}
+                    <Card className="border-slate-100 shadow-sm">
+                        <CardHeader className="border-b border-slate-50">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Users className="w-5 h-5 text-indigo-500" />
+                                New Customers
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <RecentUsersList users={dashboardData?.recentUsers} />
+                            <Button variant="outline" className="w-full mt-4 rounded-xl border-slate-200 text-slate-600 font-bold uppercase tracking-widest text-[10px] h-11" asChild>
+                                <Link href="/admin/users">Manage All Users</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Stock Alerts */}
+                    <Card className="border-slate-100 shadow-sm bg-[#163E3E]/[0.02]">
+                        <CardHeader className="border-b border-slate-50">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                                Inventory Alerts
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <DashboardAlerts alerts={dashboardData?.alerts} />
+                        </CardContent>
+                    </Card>
+
                     {/* Quick Actions */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                    <Card className="border-slate-100 shadow-sm">
+                        <CardHeader className="border-b border-slate-50">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <Plus className="w-5 h-5 text-green-500" />
                                 Quick Actions
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
+                        <CardContent className="space-y-2 pt-6">
                             <QuickActionButton
-                                href="/admin/catalog/rings/new"
+                                href="/admin/catalog/rings"
                                 icon={<Package className="w-4 h-4" />}
-                                label="Add Product"
-                                description="Create new product"
+                                label="Add Diamond Ring"
+                                description="Create new setting"
                             />
                             <QuickActionButton
-                                href="/admin/catalog/categories/new"
-                                icon={<Layers className="w-4 h-4" />}
-                                label="Add Category"
-                                description="Create new category"
+                                href="/admin/catalog/necklaces"
+                                icon={<PlusCircle className="w-4 h-4" />}
+                                label="Add Necklace"
+                                description="New jewelry piece"
                             />
-                            <QuickActionButton
-                                href="/admin/catalog/filters/new"
-                                icon={<Filter className="w-4 h-4" />}
-                                label="Add Filter"
-                                description="Create new filter"
-                            />
-                            <QuickActionButton
-                                href="/admin/orders"
-                                icon={<ShoppingBag className="w-4 h-4" />}
-                                label="View Orders"
-                                description="Manage orders"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Alerts & Notifications */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <AlertTriangle className="w-5 h-5 text-orange-500" />
-                                Alerts
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <AlertItem
-                                type="warning"
-                                count={5}
-                                label="Low Stock Items"
-                                href="/admin/catalog/rings?filter=low-stock"
-                            />
-                            <AlertItem
-                                type="danger"
-                                count={2}
-                                label="Out of Stock"
-                                href="/admin/catalog/rings?filter=out-of-stock"
-                            />
-                            <AlertItem
-                                type="info"
-                                count={3}
-                                label="Pending Orders"
-                                href="/admin/orders?status=pending"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* System Status */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm">System Status</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <StatusItem label="Database" status="healthy" />
-                            <StatusItem label="API Server" status="healthy" />
-                            <StatusItem label="Image Storage" status="healthy" />
                         </CardContent>
                     </Card>
                 </div>
             </div>
-
-            {/* Bottom Section - Category Overview */}
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Category Overview</CardTitle>
-                        <CardDescription>Products distribution across categories</CardDescription>
-                    </div>
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href="/admin/catalog/categories">
-                            Manage Categories
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                        </Link>
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <CategoryOverview />
-                </CardContent>
-            </Card>
         </div>
     )
 }
@@ -422,32 +386,32 @@ function StatusItem({ label, status }: StatusItemProps) {
 }
 
 // ========================================
-// RECENT PRODUCTS LIST
+// RECENT ORDERS LIST
 // ========================================
 
-function RecentProductsList() {
-    // TODO: Fetch from API
-    const products = [
-        { id: 1, name: 'Petite Pavé Diamond Ring', category: 'Engagement Rings', price: 1890, image: '/placeholder.jpg' },
-        { id: 2, name: 'Classic Solitaire Ring', category: 'Engagement Rings', price: 2450, image: '/placeholder.jpg' },
-        { id: 3, name: 'Halo Diamond Ring', category: 'Engagement Rings', price: 3200, image: '/placeholder.jpg' },
-    ]
+function RecentOrdersList({ orders }: { orders: any[] }) {
+    if (!orders || orders.length === 0) {
+        return <div className="py-10 text-center text-slate-400 text-sm">No recent orders</div>
+    }
 
     return (
-        <div className="space-y-3">
-            {products.map((product) => (
-                <div key={product.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors">
-                    <div className="w-12 h-12 bg-slate-200 rounded-lg flex-shrink-0"></div>
+        <div className="space-y-4">
+            {orders.map((order) => (
+                <div key={order._id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
+                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-6 h-6" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{product.name}</p>
-                        <p className="text-xs text-slate-500">{product.category}</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">
+                            {order.user?.firstName} {order.user?.lastName}
+                        </p>
+                        <p className="text-xs text-slate-500 font-medium">Order #{order._id.slice(-6).toUpperCase()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-sm font-bold text-slate-900">${product.price}</p>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                        </Button>
+                        <p className="text-sm font-bold text-[#163E3E]">${order.totalPrice?.toLocaleString()}</p>
+                        <Badge className={`${order.isPaid ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'} text-[10px] uppercase tracking-wider`}>
+                            {order.isPaid ? 'Paid' : 'Pending'}
+                        </Badge>
                     </div>
                 </div>
             ))}
@@ -456,34 +420,61 @@ function RecentProductsList() {
 }
 
 // ========================================
-// CATEGORY OVERVIEW
+// RECENT USERS LIST
 // ========================================
 
-function CategoryOverview() {
-    // TODO: Fetch from API
-    const categories = [
-        { name: 'Engagement Rings', count: 120, percentage: 49 },
-        { name: 'Wedding Rings', count: 85, percentage: 35 },
-        { name: 'Gemstones', count: 30, percentage: 12 },
-        { name: 'Jewelry', count: 10, percentage: 4 },
-    ]
+function RecentUsersList({ users }: { users: any[] }) {
+    if (!users || users.length === 0) {
+        return <div className="py-10 text-center text-slate-400 text-sm">No recent signups</div>
+    }
 
     return (
         <div className="space-y-4">
-            {categories.map((category) => (
-                <div key={category.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-slate-700">{category.name}</span>
-                        <span className="text-slate-500">{category.count} products ({category.percentage}%)</span>
+            {users.map((user) => (
+                <div key={user._id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all">
+                    <div className="w-10 h-10 bg-[#163E3E] text-white rounded-full flex items-center justify-center font-bold text-xs">
+                        {user.firstName?.[0]}{user.lastName?.[0]}
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                            className="bg-blue-500 h-full rounded-full transition-all"
-                            style={{ width: `${category.percentage}%` }}
-                        ></div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-900 truncate">{user.firstName} {user.lastName}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(user.createdAt).toLocaleDateString()}</p>
                     </div>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-tighter">
+                        {user.role}
+                    </Badge>
                 </div>
             ))}
+        </div>
+    )
+}
+
+// ========================================
+// CATEGORY OVERVIEW (Renamed to Alerts/Stats)
+// ========================================
+
+function DashboardAlerts({ alerts }: { alerts: any }) {
+    const lowStock = alerts?.lowStock || []
+
+    return (
+        <div className="space-y-4">
+            {lowStock.length === 0 ? (
+                <div className="py-10 text-center text-slate-400 text-sm">No low stock alerts</div>
+            ) : (
+                lowStock.map((item: any) => (
+                    <div key={item._id} className="flex items-center justify-between p-4 bg-orange-50/50 border border-orange-100 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                            <AlertTriangle className="w-5 h-5 text-orange-500" />
+                            <div>
+                                <p className="text-sm font-bold text-slate-900">{item.name}</p>
+                                <p className="text-xs text-orange-600 font-medium">Only {item.stock} left in stock</p>
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="sm" className="hover:bg-orange-100 text-orange-700" asChild>
+                            <Link href="/admin/catalog/rings">Restock</Link>
+                        </Button>
+                    </div>
+                ))
+            )}
         </div>
     )
 }

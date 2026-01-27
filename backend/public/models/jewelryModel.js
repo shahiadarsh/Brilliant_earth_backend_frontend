@@ -15,15 +15,55 @@ const jewelrySchema = new mongoose.Schema({
         ref: 'Category',
     },
     collectionName: { type: String },
+    priceByMetal: {
+        type: Map,
+        of: Number,
+        default: {}
+    },
 
-    // Material Specs
-    metalType: { type: String },
-    gemstoneType: { type: String },
-    totalWeight: { type: String },
-    dimensions: { type: String },
+    // Consolidated attributes for filtering and options
+    attributes: {
+        metals: {
+            type: [String],
+            default: [],
+            index: true
+        },
+        // Shape/Cut - Reference to Shape model (for pendants, earrings with stones)
+        shape: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Shape',
+            index: true
+        },
+        gemstoneType: { type: String },
+        totalWeight: { type: String },
+        dimensions: { type: String },
 
+        // Necklace Specific
+        chainLength: { type: String },
+        claspType: { type: String },
+
+        // Earring Specific
+        backingType: { type: String },
+        dropLength: { type: String },
+
+        // Bracelet Specific
+        sizeLength: { type: String },
+
+        // Pendant Specific
+        bailType: { type: String },
+        chainIncluded: { type: String }
+    },
+
+    variants: [{
+        size: String,
+        stock: { type: Number, default: 0 },
+        price: Number,
+        sku: String
+    }],
+
+    // General Description & Media
     description: { type: String },
-    images: [{ type: String }],
+    images: [{ type: String }], // Cloudinary URLs
 
     // SEO
     metaTitle: { type: String },
@@ -31,7 +71,11 @@ const jewelrySchema = new mongoose.Schema({
     keywords: { type: String },
 
     rating: { type: Number, default: 5.0 },
-    isFeatured: { type: Boolean, default: false }
+    isFeatured: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
+    isBestSeller: { type: Boolean, default: false },
+    stockStatus: { type: String, enum: ['in-stock', 'out-of-stock', 'backorder'], default: 'in-stock' }
+
 }, { timestamps: true });
 
 const Jewelry = mongoose.model('Jewelry', jewelrySchema);

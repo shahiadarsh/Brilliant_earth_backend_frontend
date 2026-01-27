@@ -91,12 +91,28 @@ import {
 
 // Import Middleware
 import { protect, restrictTo } from '../../public/middleware/authMiddleware.js';
+import upload from '../../public/middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
 // ========================================
 // MIDDLEWARE - Protect all admin routes
 // ========================================
+
+// ... (Rest of the file)
+
+// ========================================
+// BLOG ROUTES
+// ========================================
+
+router.route('/blogs')
+    .get(getAllBlogs)
+    .post(upload.single('image'), createBlog);
+
+router.route('/blogs/:id')
+    .get(getBlogById)
+    .put(upload.single('image'), updateBlog)
+    .delete(deleteBlog);
 router.use(protect);
 router.use(restrictTo('admin'));
 
@@ -479,6 +495,45 @@ router.route('/promos')
 router.route('/promos/:id')
     .put(updatePromo)
     .delete(deletePromo);
+
+// Import Blog Controller
+import {
+    getAllBlogs,
+    getBlogById,
+    createBlog,
+    updateBlog,
+    deleteBlog
+} from '../controllers/blogController.js';
+
+// ... (existing imports)
+
+// ========================================
+// BLOG ROUTES
+// ========================================
+
+router.route('/blogs')
+    .get(getAllBlogs)
+    .post(upload.single('image'), createBlog);
+
+router.route('/blogs/:id')
+    .get(getBlogById)
+    .put(upload.single('image'), updateBlog)
+    .delete(deleteBlog);
+
+// Import User Controller
+import {
+    getAllUsers,
+    updateUserRole,
+    deleteUser
+} from '../controllers/userAdminController.js';
+
+// ========================================
+// USER MANAGEMENT ROUTES
+// ========================================
+
+router.get('/users', getAllUsers);
+router.put('/users/:id/role', updateUserRole);
+router.delete('/users/:id', deleteUser);
 
 // ========================================
 // DASHBOARD ROUTES

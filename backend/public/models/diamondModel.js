@@ -10,6 +10,16 @@ const diamondSchema = new mongoose.Schema({
     price: { type: Number, required: true },
     stock: { type: Number, default: 1 },
 
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        // required: true // Optional for now to avoid breaking existing data without cat
+    },
+    subcategory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Subcategory'
+    },
+
     // Technical Specs
     depth: { type: Number },
     table: { type: Number },
@@ -20,6 +30,25 @@ const diamondSchema = new mongoose.Schema({
     certification: { type: String },
     certNumber: { type: String },
     eyeClean: { type: Boolean, default: true },
+
+    priceByMetal: {
+        type: Map,
+        of: Number,
+        default: {}
+    },
+    attributes: {
+        metals: {
+            type: [String],
+            default: [],
+            index: true
+        },
+        // Shape/Cut - Reference to Shape model
+        shape: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Shape',
+            index: true
+        }
+    },
 
     images: [{ type: String }],
     slug: { type: String, required: true, unique: true },

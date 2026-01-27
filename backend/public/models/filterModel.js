@@ -138,9 +138,9 @@ filterSchema.methods.appliesTo = function (categorySlug) {
 };
 
 // Get price impact
-filterSchema.methods.getPriceImpact = function (basePrice) {
+filterSchema.methods.getPriceImpact = function (price) {
     if (this.priceModifier.type === 'percentage') {
-        return basePrice * (this.priceModifier.value / 100);
+        return price * (this.priceModifier.value / 100);
     } else if (this.priceModifier.type === 'fixed') {
         return this.priceModifier.value;
     }

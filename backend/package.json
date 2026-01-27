@@ -20,6 +20,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.731.1",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
@@ -30,6 +31,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "multer-s3": "^3.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.12"
   },
   "devDependencies": {

@@ -6,7 +6,8 @@ const blogSchema = new mongoose.Schema({
     author: { type: String, required: true },
     excerpt: { type: String, required: true },
     content: { type: String, required: true },
-    featuredImage: { type: String },
+    image: { type: String }, // For frontend compatibility
+    featuredImage: { type: String }, // Kept for reference or backward compat
     tags: [{ type: String }],
     category: { type: String, required: true },
     status: { type: String, enum: ['Draft', 'Published'], default: 'Draft' },

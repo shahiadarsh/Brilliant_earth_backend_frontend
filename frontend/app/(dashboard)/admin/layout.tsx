@@ -53,6 +53,26 @@ const sidebarItems = [
         href: "/admin/catalog/jewelry",
     },
     {
+        title: "Necklaces",
+        icon: <Diamond className="w-5 h-5 text-emerald-500" />,
+        href: "/admin/catalog/necklaces",
+    },
+    {
+        title: "Earrings",
+        icon: <Diamond className="w-5 h-5 text-emerald-500" />,
+        href: "/admin/catalog/earrings",
+    },
+    {
+        title: "Bracelets",
+        icon: <Diamond className="w-5 h-5 text-emerald-500" />,
+        href: "/admin/catalog/bracelets",
+    },
+    {
+        title: "Pendants",
+        icon: <Diamond className="w-5 h-5 text-emerald-500" />,
+        href: "/admin/catalog/pendants",
+    },
+    {
         title: "Blog Posts",
         icon: <FileText className="w-5 h-5" />,
         href: "/admin/content/blog",
@@ -73,6 +93,11 @@ const sidebarItems = [
         href: "/admin/orders",
     },
     {
+        title: "Users",
+        icon: <Users className="w-5 h-5 text-indigo-400" />,
+        href: "/admin/users",
+    },
+    {
         title: "Settings",
         icon: <Settings className="w-5 h-5" />,
         href: "/admin/settings",
@@ -85,18 +110,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const dispatch = useDispatch()
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [globalSearchTerm, setGlobalSearchTerm] = useState("")
+    const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([])
+    const [isSearching, setIsSearching] = useState(false)
     const { user } = useSelector((state: RootState) => state.auth)
 
-    // Handle auto-closing sidebar on mobile
+    // Handle global search
     useEffect(() => {
-        if (window.innerWidth < 1024) {
-            setSidebarOpen(false)
+        if (!globalSearchTerm.trim()) {
+            setGlobalSearchResults([])
+            return
         }
-    }, [])
+
+        const delayDebounceFn = setTimeout(async () => {
+            setIsSearching(true)
+            try {
+                const response = await fetch(`/api/v1/admin/products/search/global?search=${globalSearchTerm}`)
+                const result = await response.json()
+                if (result.success) {
+                    setGlobalSearchResults(result.data)
+                }
+            } catch (error) {
+                console.error('Global search error:', error)
+            } finally {
+                setIsSearching(false)
+            }
+        }, 500)
+
+        return () => clearTimeout(delayDebounceFn)
+    }, [globalSearchTerm])
 
     // Close mobile menu on route change
     useEffect(() => {
         setMobileMenuOpen(false)
+        setGlobalSearchTerm("")
+        setGlobalSearchResults([])
     }, [pathname])
 
     return (
@@ -209,13 +257,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         >
                             <Menu className="w-5 h-5" />
                         </button>
-                        <div className="relative hidden md:block">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <div className="relative hidden md:block group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#163E3E] transition-colors" />
                             <input
                                 type="text"
                                 placeholder="Search inventory, orders..."
                                 className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm w-48 xl:w-80 focus:ring-2 focus:ring-[#163E3E]/20 transition-all outline-none"
+                                value={globalSearchTerm}
+                                onChange={(e) => setGlobalSearchTerm(e.target.value)}
                             />
+
+                            {/* Dropdown Results */}
+                            {globalSearchTerm && (
+                                <div className="absolute top-full left-0 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-[400px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {isSearching ? (
+                                        <div className="p-4 text-center">
+                                            <div className="w-5 h-5 border-2 border-[#163E3E]/20 border-t-[#163E3E] rounded-full animate-spin mx-auto mr-2 inline-block align-middle"></div>
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Searching...</span>
+                                        </div>
+                                    ) : globalSearchResults.length > 0 ? (
+                                        <div className="p-2">
+                                            {globalSearchResults.map((item) => (
+                                                <Link
+                                                    key={item._id}
+                                                    href={`/admin/catalog/${item.type}s`}
+                                                    className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg transition-colors group"
+                                                    onClick={() => setGlobalSearchTerm("")}
+                                                >
+                                                    <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 flex items-center justify-center">
+                                                        {item.images?.[0] ? <img src={item.images[0]} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-slate-300" />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-bold text-slate-800 truncate group-hover:text-[#163E3E] transition-colors">{item.name || `${item.carat}ct ${item.shape}`}</p>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item.type} • ${item.price?.toLocaleString()}</p>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <X className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No assets found</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 

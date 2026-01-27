@@ -275,9 +275,9 @@ pageSchema.methods.getProducts = async function () {
 
     // Apply sorting
     if (this.productQuery.sort === 'price-asc') {
-        productsQuery = productsQuery.sort({ basePrice: 1 });
+        productsQuery = productsQuery.sort({ price: 1 });
     } else if (this.productQuery.sort === 'price-desc') {
-        productsQuery = productsQuery.sort({ basePrice: -1 });
+        productsQuery = productsQuery.sort({ price: -1 });
     } else if (this.productQuery.sort === 'newest') {
         productsQuery = productsQuery.sort({ createdAt: -1 });
     } else if (this.productQuery.sort === 'popular') {

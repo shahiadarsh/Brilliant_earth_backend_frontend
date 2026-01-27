@@ -1,0 +1,795 @@
+"use client"
+
+import React, { useState, useRef, useEffect } from 'react'
+import {
+    Plus,
+    Search,
+    Edit2,
+    Trash2,
+    Box,
+    X,
+    Layers,
+    Info,
+    Globe,
+    Filter,
+    Upload,
+    FileSpreadsheet,
+    Download,
+    ChevronRight,
+    Eye,
+    Settings2,
+    Sparkles,
+    ShoppingBag,
+    Star
+} from 'lucide-react'
+
+import {
+    useGetJewelryQuery,
+    useCreateJewelryMutation,
+    useUpdateJewelryMutation,
+    useDeleteJewelryMutation
+} from '@/lib/redux/slices/jewelryApiSlice'
+import { useBulkUploadMutation } from '@/lib/redux/slices/bulkUploadApiSlice'
+import { useGetCategoriesQuery } from '@/lib/redux/slices/categoriesApiSlice'
+import { toast } from 'sonner'
+
+export default function BraceletCatalog() {
+    const [searchTerm, setSearchTerm] = useState("")
+    const [filterCategory, setFilterCategory] = useState("All Bracelets")
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [editingItem, setEditingItem] = useState<any>(null)
+    const [viewingItem, setViewingItem] = useState<any>(null)
+    const [modalTab, setModalTab] = useState<'details' | 'specs' | 'seo'>('details')
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const { data: jewelryData, isLoading: isJewelryLoading } = useGetJewelryQuery({
+        search: searchTerm || undefined,
+        category: filterCategory === 'All Bracelets' ? undefined : filterCategory,
+        sort: '-createdAt'
+    })
+    const { data: categoriesData } = useGetCategoriesQuery({})
+
+    const [createJewelry] = useCreateJewelryMutation()
+    const [updateJewelry] = useUpdateJewelryMutation()
+    const [deleteJewelry] = useDeleteJewelryMutation()
+    const [bulkUpload] = useBulkUploadMutation()
+
+    const allCategories = categoriesData?.data?.categories || []
+
+    const braceletCategories = allCategories.filter((c: any) =>
+        c.level === 0 && (c.name.toLowerCase().includes("bracelet") || c.name.toLowerCase().includes("jewelry"))
+    )
+
+    const [newItem, setNewItem] = useState({
+        name: "",
+        category: "",
+        subcategory: "",
+        collectionName: "Signature",
+        metalType: "14K White Gold",
+        price: "",
+        stock: "",
+        description: "",
+        gemstoneType: "",
+        dimensions: "",
+        totalWeight: "",
+        sizeLength: "", // Specific to Bracelet
+        claspType: "", // Specific to Bracelet
+        slug: "",
+        metaTitle: "",
+        metaDescription: "",
+        keywords: "",
+        variants: [] as { size: string, stock: string, price: string, sku: string }[],
+        priceByMetal: {} as Record<string, string>,
+        metals: [] as string[]
+    })
+
+    const addVariant = () => {
+        setNewItem(prev => ({
+            ...prev,
+            variants: [...prev.variants, { size: "", stock: "0", price: "", sku: "" }]
+        }))
+    }
+
+    const removeVariant = (index: number) => {
+        setNewItem(prev => ({
+            ...prev,
+            variants: prev.variants.filter((_, i) => i !== index)
+        }))
+    }
+
+    const updateVariant = (index: number, field: string, value: string) => {
+        setNewItem(prev => {
+            const updated = [...prev.variants]
+            updated[index] = { ...updated[index], [field]: value }
+            return { ...prev, variants: updated }
+        })
+    }
+
+    useEffect(() => {
+        if (braceletCategories.length > 0 && !newItem.category) {
+            setNewItem(prev => ({ ...prev, category: braceletCategories[0]._id }))
+        }
+    }, [braceletCategories])
+
+    const availableSubcategories = allCategories.filter((c: any) => c.parent?._id === newItem.category)
+
+    const [selectedImages, setSelectedImages] = useState<File[]>([])
+    const [imagePreviews, setImagePreviews] = useState<string[]>([])
+
+    // Filter displayed items to only show bracelets
+    const jewelry = (jewelryData?.data || []).filter((item: any) =>
+        item.category?.name?.toLowerCase().includes('bracelet') ||
+        item.categoryName?.toLowerCase().includes('bracelet') ||
+        (item.title && item.title.toLowerCase().includes('bracelet'))
+    );
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const files = Array.from(e.target.files)
+            setSelectedImages(prev => [...prev, ...files])
+
+            const newPreviews = files.map(file => URL.createObjectURL(file))
+            setImagePreviews(prev => [...prev, ...newPreviews])
+        }
+    }
+
+    const removeImage = (index: number) => {
+        setSelectedImages(prev => prev.filter((_, i) => i !== index))
+        setImagePreviews(prev => {
+            URL.revokeObjectURL(prev[index])
+            return prev.filter((_, i) => i !== index)
+        })
+    }
+
+    const handleDelete = async (id: string) => {
+        if (confirm("Are you sure you want to remove this bracelet?")) {
+            try {
+                await deleteJewelry(id).unwrap()
+                toast.success("Catalog updated: Item removed")
+            } catch (err) {
+                toast.error("Failed to remove item")
+            }
+        }
+    }
+
+    const handleEdit = (item: any) => {
+        setEditingItem(item)
+        setNewItem({
+            name: item.title || item.name || "",
+            category: item.category?._id || item.category || "",
+            subcategory: item.subcategory?._id || item.subcategory || "",
+            collectionName: item.collectionName || "Signature",
+            metalType: item.metalType || "14K White Gold",
+            price: item.price?.toString() || "",
+            stock: item.stock?.toString() || "",
+            description: item.description || "",
+            gemstoneType: item.gemstoneType || "",
+            dimensions: item.dimensions || "",
+            totalWeight: item.totalWeight || "",
+            sizeLength: item.sizeLength || "",
+            claspType: item.claspType || "",
+            slug: item.slug || "",
+            metaTitle: item.metaTitle || "",
+            metaDescription: item.metaDescription || "",
+            keywords: item.keywords || "",
+            variants: item.variants || [],
+            priceByMetal: item.priceByMetal || {},
+            metals: item.attributes?.metals || [item.metalType] || []
+        })
+        setImagePreviews(item.images || [])
+        setIsModalOpen(true)
+    }
+
+    const handleAddItem = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newItem.category) {
+            toast.error("Please select a valid category")
+            return
+        }
+        try {
+            const formData = new FormData()
+
+            const slug = newItem.slug || newItem.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
+
+            formData.append('title', newItem.name)
+            formData.append('category', newItem.category)
+            if (newItem.subcategory) formData.append('subcategory', newItem.subcategory)
+            formData.append('collectionName', newItem.collectionName)
+            formData.append('metalType', newItem.metalType)
+            formData.append('price', newItem.price)
+            formData.append('stock', newItem.stock)
+            formData.append('description', newItem.description)
+            formData.append('gemstoneType', newItem.gemstoneType)
+            formData.append('dimensions', newItem.dimensions)
+            formData.append('totalWeight', newItem.totalWeight)
+            formData.append('sizeLength', newItem.sizeLength)
+            formData.append('claspType', newItem.claspType)
+            formData.append('slug', slug)
+            formData.append('metaTitle', newItem.metaTitle)
+            formData.append('metaDescription', newItem.metaDescription)
+            formData.append('keywords', newItem.keywords)
+
+            // Add variants and priceByMetal
+            formData.append('variants', JSON.stringify(newItem.variants))
+            formData.append('priceByMetal', JSON.stringify(newItem.priceByMetal))
+            newItem.metals.forEach(m => formData.append('metals', m))
+
+            selectedImages.forEach(image => formData.append('images', image))
+
+            if (editingItem) {
+                await updateJewelry({ id: editingItem._id, data: formData }).unwrap()
+                toast.success("Bracelet updated successfully")
+            } else {
+                await createJewelry(formData).unwrap()
+                toast.success("Bracelet added successfully")
+            }
+
+            setIsModalOpen(false)
+            setEditingItem(null)
+            setNewItem({
+                name: "", category: braceletCategories[0]?._id || "", subcategory: "",
+                collectionName: "Signature", metalType: "14K White Gold",
+                price: "", stock: "", description: "", gemstoneType: "", dimensions: "", totalWeight: "",
+                sizeLength: "", claspType: "",
+                slug: "", metaTitle: "", metaDescription: "", keywords: "", variants: [],
+                priceByMetal: {}, metals: []
+            })
+            setSelectedImages([])
+            setImagePreviews([])
+            setModalTab('details')
+        } catch (err: any) {
+            toast.error(err.data?.message || err.message || "Failed to process product")
+        }
+    }
+
+    const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('productType', 'bracelet')
+
+            try {
+                toast.loading("Uploading products...")
+                await bulkUpload(formData).unwrap()
+                toast.dismiss()
+                toast.success("Bulk upload successful!")
+            } catch (err: any) {
+                toast.dismiss()
+                toast.error(err.data?.message || "Failed to upload CSV")
+            }
+        }
+    }
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-[#163E3E] uppercase tracking-[0.2em] mb-2">
+                        <ShoppingBag className="w-3.5 h-3.5" /> High Jewelry
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl font-serif text-slate-900 leading-tight">Bracelet Collection</h1>
+                    <p className="text-slate-500 mt-1 max-w-xl">Curate your bracelets. Manage sizes and clasp styles.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleCsvUpload}
+                        accept=".csv"
+                        className="hidden"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:border-[#163E3E] hover:text-[#163E3E] transition-all shadow-sm"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" /> Bulk Import
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingItem(null)
+                            setNewItem({
+                                name: "", category: braceletCategories[0]?._id || "", subcategory: "",
+                                collectionName: "Signature", metalType: "14K White Gold",
+                                price: "", stock: "", description: "", gemstoneType: "", dimensions: "", totalWeight: "",
+                                sizeLength: "", claspType: "",
+                                slug: "", metaTitle: "", metaDescription: "", keywords: "", variants: [],
+                                priceByMetal: {}, metals: []
+                            })
+                            setImagePreviews([])
+                            setIsModalOpen(true)
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#163E3E] text-white rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-[#163E3E]/20 group"
+                    >
+                        <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" /> New Bracelet
+                    </button>
+                </div>
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    { label: 'Total Bracelets', value: jewelry.length, unit: 'Items', icon: ShoppingBag },
+                    { label: 'Collections', value: availableSubcategories.length, unit: 'Active', icon: Star },
+                    { label: 'Inventory', value: jewelry.reduce((acc: number, j: any) => acc + (parseInt(j.stock) || 0), 0), unit: 'Units', icon: Layers },
+                    { label: 'Valuation', value: '$' + (jewelry.reduce((acc: number, j: any) => acc + (j.price * j.stock), 0) || 0).toLocaleString(), unit: 'Est. Total', icon: Sparkles },
+                ].map((stat, i) => (
+                    <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                            <stat.icon className="w-3.5 h-3.5 text-[#163E3E] opacity-20 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <div className="flex items-baseline gap-2 mt-1">
+                            <p className="text-2xl font-serif text-slate-900">{stat.value}</p>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">{stat.unit}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Filter Bar */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center gap-4">
+                <div className="relative flex-1 w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                    <input
+                        type="text"
+                        placeholder="Search bracelets by name, style or SKU..."
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#163E3E]/10 transition-all outline-none"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {/* Catalog Table */}
+            <div className="bg-white rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden relative">
+                <div className="overflow-x-auto no-scrollbar">
+                    {isJewelryLoading ? (
+                        <div className="p-32 text-center">
+                            <div className="w-12 h-12 border-4 border-slate-100 border-t-[#163E3E] rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Loading Collection...</p>
+                        </div>
+                    ) : (
+                        <table className="w-full text-left min-w-[900px]">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100">
+                                    <th className="px-10 py-7 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Bracelet</th>
+                                    <th className="px-8 py-7 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Details</th>
+                                    <th className="px-8 py-7 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Pricing</th>
+                                    <th className="px-8 py-7 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Status</th>
+                                    <th className="px-10 py-7 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {jewelry.map((item: any) => (
+                                    <tr key={item._id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-10 py-6">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-[20px] overflow-hidden flex items-center justify-center text-[#163E3E] transition-all duration-700 shadow-inner group-hover:scale-105">
+                                                    {item.images?.[0] ? <img src={item.images[0]} className="w-full h-full object-cover" alt="" /> : <Box className="w-7 h-7" />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800 leading-tight group-hover:text-[#163E3E] transition-colors">{item.title}</p>
+                                                    <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-widest">#{item._id.substring(item._id.length - 6).toUpperCase()}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold text-[#163E3E] uppercase tracking-widest">{item.category?.name || 'Bracelet'}</span>
+                                                <span className="text-[11px] text-slate-500 font-medium">{item.metalType} • {item.subcategory?.name || 'Standard'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="text-sm font-bold text-slate-900">${item.price?.toLocaleString()}</p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${item.stock > 10 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : item.stock > 0 ? 'bg-orange-400' : 'bg-rose-500'}`}></div>
+                                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{item.stock} in Stock</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button onClick={() => setViewingItem(item)} className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100" title="Inspect">
+                                                    <Eye className="w-4.5 h-4.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEdit(item)}
+                                                    className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100"
+                                                    title="Edit"
+                                                >
+                                                    <Edit2 className="w-4.5 h-4.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item._id)}
+                                                    className="p-3 text-slate-400 hover:text-red-500 hover:bg-rose-50 rounded-2xl transition-all shadow-sm border border-transparent hover:border-red-100"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4.5 h-4.5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {jewelry.length === 0 && !isJewelryLoading && (
+                                    <tr>
+                                        <td colSpan={5} className="px-10 py-32 text-center text-slate-400">
+                                            <ShoppingBag className="w-16 h-16 mx-auto mb-6 opacity-5" />
+                                            <p className="font-serif text-xl text-slate-900">Collection is empty</p>
+                                            <p className="text-[11px] font-bold uppercase tracking-widest mt-2">No bracelets found in catalog</p>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
+
+            {/* Premium Create Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-500">
+                    <div className="bg-white w-full max-w-4xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 max-h-[90vh] flex flex-col">
+                        <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30 shrink-0">
+                            <div>
+                                <h2 className="text-2xl font-serif text-slate-900">Add Bracelet</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.25em] mt-2 flex items-center gap-2">
+                                    <Settings2 className="w-4 h-4" /> Catalog Management
+                                </p>
+                            </div>
+                            <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-white rounded-full transition-all shadow-sm active:scale-95 border border-transparent hover:border-slate-100">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+
+                        {/* Modal Navigation */}
+                        <div className="flex items-center px-8 border-b border-slate-50 bg-white shadow-sm relative z-10 shrink-0 overflow-x-auto no-scrollbar">
+                            {[
+                                { id: 'details', label: '1. Basic Info' },
+                                { id: 'specs', label: '2. Specifications' },
+                                { id: 'seo', label: '3. SEO' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setModalTab(tab.id as any)}
+                                    className={`px-8 py-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all relative whitespace-nowrap
+                                        ${modalTab === tab.id ? 'text-[#163E3E]' : 'text-slate-400 hover:text-slate-600'}
+                                    `}
+                                >
+                                    {tab.label}
+                                    {modalTab === tab.id && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#163E3E] rounded-full"></div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        <form onSubmit={handleAddItem} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                            <div className="flex-1 overflow-y-auto p-8 md:p-10 custom-scrollbar">
+                                {modalTab === 'details' && (
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+                                            {/* Media */}
+                                            <div className="md:col-span-4 lg:col-span-5">
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 block">Photography</label>
+                                                <div
+                                                    onClick={() => document.getElementById('jewel-imgs')?.click()}
+                                                    className="aspect-[4/5] bg-slate-50 border-2 border-dashed border-slate-200 rounded-[32px] flex flex-col items-center justify-center gap-6 group hover:border-[#163E3E]/30 hover:bg-[#163E3E]/5 transition-all cursor-pointer relative overflow-hidden shadow-inner"
+                                                >
+                                                    <input
+                                                        type="file"
+                                                        id="jewel-imgs"
+                                                        multiple
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={handleImageChange}
+                                                    />
+                                                    <Upload className="w-10 h-10 text-slate-200 group-hover:text-[#163E3E] group-hover:scale-110 transition-all duration-700" />
+                                                    <div className="text-center px-6">
+                                                        <p className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Upload Images</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-4 gap-3 mt-6">
+                                                    {imagePreviews.map((src, idx) => (
+                                                        <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden group border border-slate-100 shadow-sm">
+                                                            <img src={src} className="w-full h-full object-cover" alt="preview" />
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(idx); }} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <X className="w-4 h-4 text-white" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="md:col-span-8 lg:col-span-7 space-y-6">
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Bracelet Name</label>
+                                                    <input required type="text" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="e.g. Tennis Bracelet" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Price ($)</label>
+                                                        <input required type="number" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-[#163E3E] outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="0.00" value={newItem.price} onChange={(e) => setNewItem({ ...newItem, price: e.target.value })} />
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Stock Quantity</label>
+                                                        <input required type="number" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="0" value={newItem.stock} onChange={(e) => setNewItem({ ...newItem, stock: e.target.value })} />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Description</label>
+                                                    <textarea rows={5} className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-medium text-slate-700 leading-relaxed outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10 resize-none" placeholder="Description of the bracelet..." value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {modalTab === 'specs' && (
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="space-y-6">
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                                                    <select className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10 cursor-pointer" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value, subcategory: "" })}>
+                                                        {braceletCategories.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Sub-Category</label>
+                                                    <select className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10 cursor-pointer" value={newItem.subcategory} onChange={(e) => setNewItem({ ...newItem, subcategory: e.target.value })}>
+                                                        <option value="">Select a Style</option>
+                                                        {availableSubcategories.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Available Metals</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["14K White Gold", "18K Yellow Gold", "14K Rose Gold", "Platinum", "Sterling Silver"].map((metal) => (
+                                                            <button
+                                                                key={metal}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const exists = newItem.metals.includes(metal)
+                                                                    const newMetals = exists ? newItem.metals.filter(m => m !== metal) : [...newItem.metals, metal]
+                                                                    const newPriceMap = { ...newItem.priceByMetal }
+                                                                    if (!exists && !newPriceMap[metal]) {
+                                                                        newPriceMap[metal] = newItem.price;
+                                                                    } else if (exists) {
+                                                                        delete newPriceMap[metal];
+                                                                    }
+                                                                    setNewItem({
+                                                                        ...newItem,
+                                                                        metals: newMetals,
+                                                                        priceByMetal: newPriceMap
+                                                                    })
+                                                                }}
+                                                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all shadow-sm
+                                                                    ${newItem.metals.includes(metal) ? 'bg-[#163E3E] border-[#163E3E] text-white' : 'bg-white border-slate-100 text-slate-400 hover:text-slate-600'}
+                                                                `}
+                                                            >
+                                                                {metal}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Metal Price Inputs */}
+                                                    {newItem.metals.length > 0 && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 animate-in fade-in slide-in-from-top-2">
+                                                            {newItem.metals.map((metal) => (
+                                                                <div key={metal} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-3">
+                                                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{metal}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] font-bold text-slate-300">$</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-20 px-2 py-1 bg-white border-none rounded-lg text-xs font-bold text-[#163E3E] outline-none shadow-sm"
+                                                                            placeholder={newItem.price}
+                                                                            value={newItem.priceByMetal[metal] || ""}
+                                                                            onChange={(e) => {
+                                                                                setNewItem({
+                                                                                    ...newItem,
+                                                                                    priceByMetal: { ...newItem.priceByMetal, [metal]: e.target.value }
+                                                                                })
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-6">
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Size / Length</label>
+                                                    <input type="text" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="e.g. 7 inches, Small" value={newItem.sizeLength} onChange={(e) => setNewItem({ ...newItem, sizeLength: e.target.value })} />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Clasp Type</label>
+                                                    <input type="text" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="e.g. Box Clasp" value={newItem.claspType} onChange={(e) => setNewItem({ ...newItem, claspType: e.target.value })} />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Gemstones</label>
+                                                    <input type="text" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="e.g. Diamond, Sapphire" value={newItem.gemstoneType} onChange={(e) => setNewItem({ ...newItem, gemstoneType: e.target.value })} />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Variants Section */}
+                                        <div className="space-y-6 pt-6 border-t border-slate-100">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Size & Stock Variants</label>
+                                                <button type="button" onClick={addVariant} className="text-[10px] font-bold text-[#163E3E] uppercase tracking-widest border border-[#163E3E]/20 px-3 py-1 rounded-lg hover:bg-[#163E3E]/5 transition-all">
+                                                    + Add Size
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {newItem.variants.length === 0 ? (
+                                                    <div className="p-8 bg-slate-50 rounded-[20px] text-center border border-dashed border-slate-200">
+                                                        <p className="text-xs text-slate-400 font-medium">No custom sizes added. Using global stock/price.</p>
+                                                    </div>
+                                                ) : (
+                                                    newItem.variants.map((variant, idx) => (
+                                                        <div key={idx} className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-[20px] items-end animate-in fade-in slide-in-from-top-2">
+                                                            <div className="space-y-2">
+                                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pl-1">Size</label>
+                                                                <input type="text" className="w-full px-4 py-2 bg-white border-none rounded-xl text-xs font-bold outline-none shadow-sm" placeholder="e.g. 7 in" value={variant.size} onChange={(e) => updateVariant(idx, 'size', e.target.value)} />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pl-1">Stock</label>
+                                                                <input type="number" className="w-full px-4 py-2 bg-white border-none rounded-xl text-xs font-bold outline-none shadow-sm" placeholder="0" value={variant.stock} onChange={(e) => updateVariant(idx, 'stock', e.target.value)} />
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pl-1">Price Override</label>
+                                                                <input type="number" className="w-full px-4 py-2 bg-white border-none rounded-xl text-xs font-bold outline-none shadow-sm text-emerald-600" placeholder="Optional" value={variant.price} onChange={(e) => updateVariant(idx, 'price', e.target.value)} />
+                                                            </div>
+                                                            <button type="button" onClick={() => removeVariant(idx)} className="h-10 text-rose-500 hover:bg-rose-50 rounded-xl flex items-center justify-center transition-all bg-white shadow-sm border border-transparent hover:border-rose-100">
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {modalTab === 'seo' && (
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">URL Slug</label>
+                                            <input type="text" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="bracelet-name-slug" value={newItem.slug} onChange={(e) => setNewItem({ ...newItem, slug: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Meta Title</label>
+                                            <input type="text" className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" placeholder="SEO Title" value={newItem.metaTitle} onChange={(e) => setNewItem({ ...newItem, metaTitle: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Meta Description</label>
+                                            <textarea rows={5} className="w-full px-6 py-4 bg-slate-50 border-none rounded-[20px] text-sm font-medium text-slate-700 leading-relaxed outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10 resize-none" placeholder="SEO Description..." value={newItem.metaDescription} onChange={(e) => setNewItem({ ...newItem, metaDescription: e.target.value })} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-6 p-6 border-t border-slate-100 bg-slate-50/50 shrink-0">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-4 bg-white border border-slate-200 text-slate-500 rounded-[20px] text-[11px] font-bold uppercase tracking-[0.2em] hover:text-slate-700 hover:bg-slate-50 transition-all active:scale-95">Cancel</button>
+                                <button type="submit" className="flex-1 px-8 py-4 bg-[#163E3E] text-white rounded-[20px] text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-xl shadow-[#163E3E]/20 active:scale-95 transform">Save Bracelet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Modal */}
+            {viewingItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-500" onClick={() => setViewingItem(null)}>
+                    <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                            <div>
+                                <h2 className="text-2xl font-serif text-slate-900">{viewingItem.title}</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5">#{viewingItem._id.substring(viewingItem._id.length - 6).toUpperCase()}</p>
+                            </div>
+                            <button onClick={() => setViewingItem(null)} className="p-3 hover:bg-white rounded-2xl transition-all shadow-sm active:scale-95 border border-transparent hover:border-slate-100">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-10 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div className="aspect-[4/5] bg-slate-50 rounded-3xl overflow-hidden border border-slate-100">
+                                        {viewingItem.images?.[0] ? (
+                                            <img src={viewingItem.images[0]} className="w-full h-full object-cover" alt="Item" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center"><Box className="w-24 h-24 text-slate-200" /></div>
+                                        )}
+                                    </div>
+                                    {viewingItem.images?.length > 1 && (
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {viewingItem.images.slice(1, 5).map((img: string, idx: number) => (
+                                                <div key={idx} className="aspect-square bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+                                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Classification</p>
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-bold text-[#163E3E]">{viewingItem.category?.name || 'Uncategorized'}</p>
+                                            <p className="text-xs text-slate-500">{viewingItem.subcategory?.name || 'Standard'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Specifications</p>
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: 'Collection', value: viewingItem.collectionName || 'N/A' },
+                                                { label: 'Metal', value: viewingItem.metalType || 'N/A' },
+                                                { label: 'Gemstones', value: viewingItem.gemstoneType || 'N/A' },
+                                                { label: 'Size/Length', value: viewingItem.sizeLength || 'N/A' },
+                                                { label: 'Clasp', value: viewingItem.claspType || 'N/A' },
+                                                { label: 'Weight', value: viewingItem.totalWeight || 'N/A' }
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                                                    <span className="text-xs text-slate-500 font-medium">{item.label}</span>
+                                                    <span className="text-sm font-bold text-slate-900">{item.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {viewingItem.description && (
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Description</p>
+                                            <p className="text-sm text-slate-600 leading-relaxed">{viewingItem.description}</p>
+                                        </div>
+                                    )}
+                                    <div className="bg-[#163E3E] p-6 rounded-3xl text-white">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2">Valuation</p>
+                                        <p className="text-3xl font-serif">${viewingItem.price?.toLocaleString()}</p>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <div className={`w-2 h-2 rounded-full ${viewingItem.stock > 0 ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">{viewingItem.stock} Units Available</span>
+                                        </div>
+                                    </div>
+
+                                    {viewingItem.variants?.length > 0 && (
+                                        <div className="mt-6">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Available Variants</p>
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {viewingItem.variants.map((v: any, idx: number) => (
+                                                    <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-[#163E3E]">
+                                                                {v.size?.[0] || 'S'}
+                                                            </div>
+                                                            <span className="text-xs font-bold text-slate-700">Size: {v.size}</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-[10px] font-bold text-[#163E3E] uppercase">{v.stock} in stock</p>
+                                                            {v.price && <p className="text-[10px] text-emerald-600 font-bold mt-0.5">${v.price.toLocaleString()}</p>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

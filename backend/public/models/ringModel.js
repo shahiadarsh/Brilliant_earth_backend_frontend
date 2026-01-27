@@ -55,7 +55,7 @@ const ringSchema = new mongoose.Schema({
     },
 
     // ========== PRICING ==========
-    basePrice: {
+    price: {
         type: Number,
         required: true,
         min: 0,
@@ -81,9 +81,10 @@ const ringSchema = new mongoose.Schema({
             index: true
         },
 
-        // Shape/Cut
+        // Shape/Cut - Reference to Shape model
         shape: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Shape',
             index: true
         },
 
@@ -144,6 +145,12 @@ const ringSchema = new mongoose.Schema({
         type: [String],
         default: ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9']
     },
+    variants: [{
+        size: String,
+        stock: { type: Number, default: 0 },
+        price: Number, // Optional override price for specific size
+        sku: String
+    }],
 
     // ========== IMAGES ==========
     images: {
@@ -276,32 +283,32 @@ ringSchema.index({ 'attributes.metals': 1 });
 ringSchema.index({ 'attributes.shape': 1 });
 ringSchema.index({ 'attributes.style': 1 });
 ringSchema.index({ 'attributes.stoneType': 1 });
-ringSchema.index({ basePrice: 1 });
+ringSchema.index({ price: 1 });
 ringSchema.index({ isActive: 1, stockStatus: 1 });
 ringSchema.index({ isBestSeller: 1, isFeatured: 1 });
 ringSchema.index({ createdAt: -1 });
 
 // Compound indexes for common queries
 ringSchema.index({ category: 1, isActive: 1, stockStatus: 1 });
-ringSchema.index({ category: 1, 'attributes.metals': 1, basePrice: 1 });
+ringSchema.index({ category: 1, 'attributes.metals': 1, price: 1 });
 
 // ========== VIRTUALS ==========
 // Get current price (sale price if available, otherwise base price)
 ringSchema.virtual('currentPrice').get(function () {
-    return this.salePrice || this.basePrice;
+    return this.salePrice || this.price;
 });
 
 // Get discount percentage
 ringSchema.virtual('discountPercentage').get(function () {
-    if (this.salePrice && this.salePrice < this.basePrice) {
-        return Math.round(((this.basePrice - this.salePrice) / this.basePrice) * 100);
+    if (this.salePrice && this.salePrice < this.price) {
+        return Math.round(((this.price - this.salePrice) / this.price) * 100);
     }
     return 0;
 });
 
 // Check if on sale
 ringSchema.virtual('isOnSale').get(function () {
-    return this.salePrice && this.salePrice < this.basePrice;
+    return this.salePrice && this.salePrice < this.price;
 });
 
 // Get availability status
@@ -320,7 +327,7 @@ ringSchema.methods.generateSlug = function () {
 
 // Get price for specific metal
 ringSchema.methods.getPriceByMetal = function (metal) {
-    return this.priceByMetal.get(metal) || this.basePrice;
+    return this.priceByMetal.get(metal) || this.price;
 };
 
 // Update stock status based on quantity
@@ -353,9 +360,9 @@ ringSchema.statics.getFiltered = function (filters = {}) {
     if (filters.stoneType) query['attributes.stoneType'] = filters.stoneType;
 
     if (filters.minPrice || filters.maxPrice) {
-        query.basePrice = {};
-        if (filters.minPrice) query.basePrice.$gte = filters.minPrice;
-        if (filters.maxPrice) query.basePrice.$lte = filters.maxPrice;
+        query.price = {};
+        if (filters.minPrice) query.price.$gte = filters.minPrice;
+        if (filters.maxPrice) query.price.$lte = filters.maxPrice;
     }
 
     return this.find(query);

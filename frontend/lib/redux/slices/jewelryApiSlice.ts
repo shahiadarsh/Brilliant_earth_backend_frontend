@@ -4,14 +4,20 @@ export const jewelryApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getJewelry: builder.query({
             query: (params) => ({
-                url: '/jewelry',
-                params,
+                url: '/admin/products',
+                params: { ...params, productType: 'jewelry' },
+            }),
+            providesTags: ['Jewelry'],
+        }),
+        getJewelryById: builder.query({
+            query: (id) => ({
+                url: `/admin/products/jewelry/${id}`,
             }),
             providesTags: ['Jewelry'],
         }),
         createJewelry: builder.mutation({
             query: (data) => ({
-                url: '/jewelry',
+                url: '/admin/products/jewelry',
                 method: 'POST',
                 body: data,
             }),
@@ -19,15 +25,15 @@ export const jewelryApiSlice = apiSlice.injectEndpoints({
         }),
         updateJewelry: builder.mutation({
             query: ({ id, data }) => ({
-                url: `/jewelry/${id}`,
-                method: 'PATCH',
+                url: `/admin/products/jewelry/${id}`,
+                method: 'PUT',
                 body: data,
             }),
             invalidatesTags: ['Jewelry'],
         }),
         deleteJewelry: builder.mutation({
             query: (id) => ({
-                url: `/jewelry/${id}`,
+                url: `/admin/products/jewelry/${id}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['Jewelry'],
@@ -37,6 +43,7 @@ export const jewelryApiSlice = apiSlice.injectEndpoints({
 
 export const {
     useGetJewelryQuery,
+    useGetJewelryByIdQuery,
     useCreateJewelryMutation,
     useUpdateJewelryMutation,
     useDeleteJewelryMutation,

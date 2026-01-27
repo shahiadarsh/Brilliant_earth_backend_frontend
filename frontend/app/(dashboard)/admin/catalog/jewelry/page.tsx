@@ -30,6 +30,7 @@ import {
     useDeleteJewelryMutation
 } from '@/lib/redux/slices/jewelryApiSlice'
 import { useGetCategoriesQuery } from '@/lib/redux/slices/categoriesApiSlice'
+import { useBulkUploadMutation } from '@/lib/redux/slices/bulkUploadApiSlice'
 import { toast } from 'sonner'
 
 export default function JewelryCatalog() {
@@ -37,12 +38,13 @@ export default function JewelryCatalog() {
     const [filterCategory, setFilterCategory] = useState("All Categories")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingItem, setEditingItem] = useState<any>(null)
+    const [viewingItem, setViewingItem] = useState<any>(null)
     const [modalTab, setModalTab] = useState<'details' | 'specs' | 'seo'>('details')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // API Hooks
     const { data: jewelryData, isLoading: isJewelryLoading } = useGetJewelryQuery({
-        name: searchTerm || undefined,
+        search: searchTerm || undefined,
         category: filterCategory === 'All Categories' ? undefined : filterCategory,
         sort: '-createdAt'
     })
@@ -51,6 +53,7 @@ export default function JewelryCatalog() {
     const [createJewelry] = useCreateJewelryMutation()
     const [updateJewelry] = useUpdateJewelryMutation()
     const [deleteJewelry] = useDeleteJewelryMutation()
+    const [bulkUpload] = useBulkUploadMutation()
 
     const allCategories = categoriesData?.data?.categories || []
 
@@ -74,7 +77,9 @@ export default function JewelryCatalog() {
         slug: "",
         metaTitle: "",
         metaDescription: "",
-        keywords: ""
+        keywords: "",
+        priceByMetal: {} as Record<string, string>,
+        metals: [] as string[]
     })
 
     useEffect(() => {
@@ -136,7 +141,9 @@ export default function JewelryCatalog() {
             slug: item.slug || "",
             metaTitle: item.metaTitle || "",
             metaDescription: item.metaDescription || "",
-            keywords: item.keywords || ""
+            keywords: item.keywords || "",
+            priceByMetal: item.priceByMetal || {},
+            metals: item.attributes?.metals || [item.metalType] || []
         })
         setImagePreviews(item.images || [])
         setIsModalOpen(true)
@@ -168,6 +175,8 @@ export default function JewelryCatalog() {
             formData.append('metaTitle', newItem.metaTitle)
             formData.append('metaDescription', newItem.metaDescription)
             formData.append('keywords', newItem.keywords)
+            formData.append('priceByMetal', JSON.stringify(newItem.priceByMetal))
+            newItem.metals.forEach(m => formData.append('metals', m))
 
             selectedImages.forEach(image => formData.append('images', image))
 
@@ -185,7 +194,8 @@ export default function JewelryCatalog() {
                 name: "", category: jewelryCategories[0]?._id || "", subcategory: "",
                 collectionName: "Signature", metalType: "14K White Gold",
                 price: "", stock: "", description: "", gemstoneType: "", dimensions: "", totalWeight: "",
-                slug: "", metaTitle: "", metaDescription: "", keywords: ""
+                slug: "", metaTitle: "", metaDescription: "", keywords: "",
+                priceByMetal: {}, metals: []
             })
             setSelectedImages([])
             setImagePreviews([])
@@ -196,10 +206,22 @@ export default function JewelryCatalog() {
         }
     }
 
-    const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            toast.info(`Bulk upload simulation: Reading ${file.name}...`)
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('productType', 'jewelry')
+
+            try {
+                toast.loading("Authenticating bulk registry...")
+                await bulkUpload(formData).unwrap()
+                toast.dismiss()
+                toast.success("Bulk registry protocol complete")
+            } catch (err: any) {
+                toast.dismiss()
+                toast.error(err.data?.message || "Protocol failed: Invalid CSV structure")
+            }
         }
     }
 
@@ -235,7 +257,8 @@ export default function JewelryCatalog() {
                                 name: "", category: jewelryCategories[0]?._id || "", subcategory: "",
                                 collectionName: "Signature", metalType: "14K White Gold",
                                 price: "", stock: "", description: "", gemstoneType: "", dimensions: "", totalWeight: "",
-                                slug: "", metaTitle: "", metaDescription: "", keywords: ""
+                                slug: "", metaTitle: "", metaDescription: "", keywords: "",
+                                priceByMetal: {}, metals: []
                             })
                             setImagePreviews([])
                             setIsModalOpen(true)
@@ -349,7 +372,7 @@ export default function JewelryCatalog() {
                                         </td>
                                         <td className="px-10 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100" title="Preview">
+                                                <button onClick={() => setViewingItem(item)} className="p-3 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-100" title="Preview">
                                                     <Eye className="w-4.5 h-4.5" />
                                                 </button>
                                                 <button
@@ -505,10 +528,61 @@ export default function JewelryCatalog() {
                                                     </select>
                                                 </div>
                                                 <div className="space-y-4">
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Primary Metal</label>
-                                                    <select className="w-full px-7 py-5 bg-slate-50 border-none rounded-[24px] text-sm font-bold text-slate-900 outline-none shadow-sm focus:ring-2 focus:ring-[#163E3E]/10" value={newItem.metalType} onChange={(e) => setNewItem({ ...newItem, metalType: e.target.value })}>
-                                                        <option>14K White Gold</option><option>18K Yellow Gold</option><option>14K Rose Gold</option><option>Platinum</option><option>Sterling Silver</option>
-                                                    </select>
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Available Metals</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["14K White Gold", "18K Yellow Gold", "14K Rose Gold", "Platinum", "Sterling Silver"].map((metal) => (
+                                                            <button
+                                                                key={metal}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const exists = newItem.metals.includes(metal)
+                                                                    const newMetals = exists ? newItem.metals.filter(m => m !== metal) : [...newItem.metals, metal]
+                                                                    const newPriceMap = { ...newItem.priceByMetal }
+                                                                    if (!exists && !newPriceMap[metal]) {
+                                                                        newPriceMap[metal] = newItem.price;
+                                                                    } else if (exists) {
+                                                                        delete newPriceMap[metal];
+                                                                    }
+                                                                    setNewItem({
+                                                                        ...newItem,
+                                                                        metals: newMetals,
+                                                                        priceByMetal: newPriceMap
+                                                                    })
+                                                                }}
+                                                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all shadow-sm
+                                                                    ${newItem.metals.includes(metal) ? 'bg-[#163E3E] border-[#163E3E] text-white' : 'bg-white border-slate-100 text-slate-400 hover:text-slate-600'}
+                                                                `}
+                                                            >
+                                                                {metal}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Metal Price Inputs */}
+                                                    {newItem.metals.length > 0 && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                                            {newItem.metals.map((metal) => (
+                                                                <div key={metal} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-3">
+                                                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{metal}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] font-bold text-slate-300">$</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-20 px-2 py-1 bg-white border-none rounded-lg text-xs font-bold text-[#163E3E] outline-none shadow-sm"
+                                                                            placeholder={newItem.price}
+                                                                            value={newItem.priceByMetal[metal] || ""}
+                                                                            onChange={(e) => {
+                                                                                setNewItem({
+                                                                                    ...newItem,
+                                                                                    priceByMetal: { ...newItem.priceByMetal, [metal]: e.target.value }
+                                                                                })
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -573,6 +647,85 @@ export default function JewelryCatalog() {
                                 <button type="submit" className="flex-1 px-12 py-5 bg-[#163E3E] text-white rounded-[32px] text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-2xl shadow-[#163E3E]/30 active:scale-95 transform">Confirm & List to Atelier</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Modal */}
+            {viewingItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-500" onClick={() => setViewingItem(null)}>
+                    <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                            <div>
+                                <h2 className="text-2xl font-serif text-slate-900">{viewingItem.title}</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5">#{viewingItem._id.substring(viewingItem._id.length - 6).toUpperCase()}</p>
+                            </div>
+                            <button onClick={() => setViewingItem(null)} className="p-3 hover:bg-white rounded-2xl transition-all shadow-sm active:scale-95 border border-transparent hover:border-slate-100">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-10 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div className="aspect-[4/5] bg-slate-50 rounded-3xl overflow-hidden border border-slate-100">
+                                        {viewingItem.images?.[0] ? (
+                                            <img src={viewingItem.images[0]} className="w-full h-full object-cover" alt="Item" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center"><Box className="w-24 h-24 text-slate-200" /></div>
+                                        )}
+                                    </div>
+                                    {viewingItem.images?.length > 1 && (
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {viewingItem.images.slice(1, 5).map((img: string, idx: number) => (
+                                                <div key={idx} className="aspect-square bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+                                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Classification</p>
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-bold text-[#163E3E]">{viewingItem.category?.name || 'Uncategorized'}</p>
+                                            <p className="text-xs text-slate-500">{viewingItem.subcategory?.name || 'Standard'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Specifications</p>
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: 'Collection', value: viewingItem.collectionName || 'N/A' },
+                                                { label: 'Metal', value: viewingItem.metalType || 'N/A' },
+                                                { label: 'Gemstones', value: viewingItem.gemstoneType || 'N/A' },
+                                                { label: 'Dimensions', value: viewingItem.dimensions || 'N/A' },
+                                                { label: 'Weight', value: viewingItem.totalWeight || 'N/A' }
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                                                    <span className="text-xs text-slate-500 font-medium">{item.label}</span>
+                                                    <span className="text-sm font-bold text-slate-900">{item.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {viewingItem.description && (
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Description</p>
+                                            <p className="text-sm text-slate-600 leading-relaxed">{viewingItem.description}</p>
+                                        </div>
+                                    )}
+                                    <div className="bg-[#163E3E] p-6 rounded-3xl text-white">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2">Valuation</p>
+                                        <p className="text-3xl font-serif">${viewingItem.price?.toLocaleString()}</p>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <div className={`w-2 h-2 rounded-full ${viewingItem.stock > 0 ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">{viewingItem.stock} Units Available</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

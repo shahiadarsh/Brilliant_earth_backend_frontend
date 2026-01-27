@@ -26,6 +26,7 @@ import {
     useUpdateDiamondMutation,
     useDeleteDiamondMutation
 } from '@/lib/redux/slices/diamondsApiSlice'
+import { useBulkUploadMutation } from '@/lib/redux/slices/bulkUploadApiSlice'
 import { useGetCategoriesQuery } from '@/lib/redux/slices/categoriesApiSlice'
 import { toast } from 'sonner'
 
@@ -34,12 +35,15 @@ export default function DiamondsCatalog() {
     const [filterOrigin, setFilterOrigin] = useState("All Origins")
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingDiamond, setEditingDiamond] = useState<any>(null)
+    const [viewingDiamond, setViewingDiamond] = useState<any>(null)
     const [modalTab, setModalTab] = useState<'4cs' | 'technical' | 'seo'>('4cs')
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 20
     const fileInputRef = React.useRef<HTMLInputElement>(null)
 
     // API Hooks
     const { data: diamondsData, isLoading: isDiaLoading } = useGetDiamondsQuery({
-        shape: searchTerm || undefined,
+        search: searchTerm || undefined,
         origin: filterOrigin === 'All Origins' ? undefined : filterOrigin,
         sort: '-createdAt'
     })
@@ -48,6 +52,7 @@ export default function DiamondsCatalog() {
     const [createDiamond] = useCreateDiamondMutation()
     const [updateDiamond] = useUpdateDiamondMutation()
     const [deleteDiamond] = useDeleteDiamondMutation()
+    const [bulkUpload] = useBulkUploadMutation()
 
     const allCategories = categoriesData?.data?.categories || []
 
@@ -77,13 +82,18 @@ export default function DiamondsCatalog() {
         slug: "",
         metaTitle: "",
         metaDescription: "",
-        keywords: ""
+        keywords: "",
+        priceByMetal: {} as Record<string, string>,
+        metals: [] as string[]
     })
 
     const [selectedImages, setSelectedImages] = useState<File[]>([])
     const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
-    const diamonds = diamondsData?.data || []
+    const allDiamonds = diamondsData?.data || []
+    const totalPages = Math.ceil(allDiamonds.length / itemsPerPage)
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const diamonds = allDiamonds.slice(startIndex, startIndex + itemsPerPage)
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -136,7 +146,9 @@ export default function DiamondsCatalog() {
             slug: dia.slug || "",
             metaTitle: dia.metaTitle || "",
             metaDescription: dia.metaDescription || "",
-            keywords: dia.keywords || ""
+            keywords: dia.keywords || "",
+            priceByMetal: dia.priceByMetal || {},
+            metals: dia.attributes?.metals || []
         })
         setImagePreviews(dia.images || [])
         setIsModalOpen(true)
@@ -150,8 +162,18 @@ export default function DiamondsCatalog() {
 
             Object.entries(newDiamond).forEach(([key, value]) => {
                 if (key === 'slug') formData.append(key, slug)
+                else if (key === 'priceByMetal') formData.append(key, JSON.stringify(value))
+                else if (key === 'metals') {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => formData.append('metals', v))
+                    }
+                }
                 else formData.append(key, String(value))
             })
+
+            // Fix: Send existing images (non-blob URLs) as JSON string
+            const existingImageUrls = imagePreviews.filter(url => !url.startsWith('blob:'))
+            formData.append('existingImages', JSON.stringify(existingImageUrls))
 
             selectedImages.forEach(image => formData.append('images', image))
 
@@ -168,7 +190,8 @@ export default function DiamondsCatalog() {
             setNewDiamond({
                 shape: "Round", carat: "", cut: "Ideal", color: "F", clarity: "VS1", origin: "Natural", price: "", stock: "1",
                 depth: "", table: "", symmetry: "Excellent", polish: "Excellent", fluorescence: "None", lwRatio: "",
-                certification: "GIA", certNumber: "", eyeClean: true, slug: "", metaTitle: "", metaDescription: "", keywords: ""
+                certification: "GIA", certNumber: "", eyeClean: true, slug: "", metaTitle: "", metaDescription: "", keywords: "",
+                priceByMetal: {}, metals: []
             })
             setSelectedImages([])
             setImagePreviews([])
@@ -189,7 +212,32 @@ export default function DiamondsCatalog() {
                     <p className="text-slate-500 mt-1 max-w-xl">Precision management for natural and laboratory diamonds. Dynamic shape synchronization with master registry.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <input type="file" ref={fileInputRef} className="hidden" accept=".csv" />
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".csv"
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                                const formData = new FormData()
+                                formData.append('file', file)
+                                formData.append('productType', 'diamond')
+
+                                try {
+                                    toast.loading("Importing diamonds to vault...")
+                                    await bulkUpload(formData).unwrap()
+                                    toast.dismiss()
+                                    toast.success("Bulk import complete! Refreshing catalog...")
+                                } catch (err: any) {
+                                    toast.dismiss()
+                                    toast.error(err.data?.message || err.message || "Failed to upload diamonds")
+                                }
+                                // Reset input
+                                e.target.value = ''
+                            }
+                        }}
+                    />
                     <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:border-[#163E3E] hover:text-[#163E3E] transition-all shadow-sm">
                         <FileSpreadsheet className="w-4 h-4" /> Bulk Import
                     </button>
@@ -199,7 +247,8 @@ export default function DiamondsCatalog() {
                             setNewDiamond({
                                 shape: "Round", carat: "", cut: "Ideal", color: "F", clarity: "VS1", origin: "Natural", price: "", stock: "1",
                                 depth: "", table: "", symmetry: "Excellent", polish: "Excellent", fluorescence: "None", lwRatio: "",
-                                certification: "GIA", certNumber: "", eyeClean: true, slug: "", metaTitle: "", metaDescription: "", keywords: ""
+                                certification: "GIA", certNumber: "", eyeClean: true, slug: "", metaTitle: "", metaDescription: "", keywords: "",
+                                priceByMetal: {}, metals: []
                             })
                             setImagePreviews([])
                             setIsModalOpen(true)
@@ -328,7 +377,7 @@ export default function DiamondsCatalog() {
                                         </td>
                                         <td className="px-8 py-5 text-right">
                                             <div className="flex items-center justify-end gap-1.5">
-                                                <button className="p-2.5 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-xl transition-all shadow-sm hover:shadow-md border border-transparent hover:border-slate-100" title="Inspect"><Eye className="w-4 h-4" /></button>
+                                                <button onClick={() => setViewingDiamond(dia)} className="p-2.5 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-xl transition-all shadow-sm hover:shadow-md border border-transparent hover:border-slate-100" title="Inspect"><Eye className="w-4 h-4" /></button>
                                                 <button
                                                     onClick={() => handleEdit(dia)}
                                                     className="p-2.5 text-slate-400 hover:text-[#163E3E] hover:bg-white rounded-xl transition-all shadow-sm hover:shadow-md border border-transparent hover:border-slate-100"
@@ -345,6 +394,45 @@ export default function DiamondsCatalog() {
                         </table>
                     )}
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-10 py-6 border-t border-slate-100">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                            Page {currentPage} of {totalPages} · {allDiamonds.length} Total
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-[#163E3E] hover:text-[#163E3E] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`w-10 h-10 rounded-xl text-[11px] font-bold transition-all ${currentPage === page
+                                            ? 'bg-[#163E3E] text-white shadow-lg'
+                                            : 'bg-white border border-slate-200 text-slate-600 hover:border-[#163E3E]'
+                                            }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-[#163E3E] hover:text-[#163E3E] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Premium Create Modal */}
@@ -462,6 +550,64 @@ export default function DiamondsCatalog() {
                                                         </select>
                                                     </div>
                                                 </div>
+
+                                                <div className="space-y-4">
+                                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Available Metals (Pre-set)</label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {["14K White Gold", "18K Yellow Gold", "14K Rose Gold", "Platinum", "Sterling Silver"].map((metal) => (
+                                                            <button
+                                                                key={metal}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const exists = (newDiamond.metals || []).includes(metal)
+                                                                    const newMetals = exists ? newDiamond.metals.filter((m: string) => m !== metal) : [...(newDiamond.metals || []), metal]
+                                                                    const newPriceMap = { ...(newDiamond.priceByMetal || {}) }
+                                                                    if (!exists && !newPriceMap[metal]) {
+                                                                        newPriceMap[metal] = newDiamond.price;
+                                                                    } else if (exists) {
+                                                                        delete newPriceMap[metal];
+                                                                    }
+                                                                    setNewDiamond({
+                                                                        ...newDiamond,
+                                                                        metals: newMetals,
+                                                                        priceByMetal: newPriceMap
+                                                                    })
+                                                                }}
+                                                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all shadow-sm
+                                                                    ${(newDiamond.metals || []).includes(metal) ? 'bg-[#163E3E] border-[#163E3E] text-white' : 'bg-white border-slate-100 text-slate-400 hover:text-slate-600'}
+                                                                `}
+                                                            >
+                                                                {metal}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Metal Price Inputs */}
+                                                    {newDiamond.metals?.length > 0 && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                                            {newDiamond.metals.map((metal: string) => (
+                                                                <div key={metal} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-3">
+                                                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{metal}</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-[10px] font-bold text-slate-300">$</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-20 px-2 py-1 bg-white border-none rounded-lg text-xs font-bold text-[#163E3E] outline-none shadow-sm"
+                                                                            placeholder={newDiamond.price}
+                                                                            value={newDiamond.priceByMetal?.[metal] || ""}
+                                                                            onChange={(e) => {
+                                                                                setNewDiamond({
+                                                                                    ...newDiamond,
+                                                                                    priceByMetal: { ...(newDiamond.priceByMetal || {}), [metal]: e.target.value }
+                                                                                })
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <div className="p-8 bg-emerald-50 rounded-[32px] border border-emerald-100 flex items-center justify-between shadow-sm">
                                                     <div>
                                                         <p className="font-serif text-lg text-emerald-900 leading-none">Eye Clean Verified</p>
@@ -507,6 +653,91 @@ export default function DiamondsCatalog() {
                                 <button type="submit" className="flex-1 px-10 py-5 bg-[#163E3E] text-white rounded-[24px] text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-2xl shadow-[#163E3E]/30 active:scale-95 transform">Confirm & Authenticate Entry</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* View Diamond Modal */}
+            {viewingDiamond && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-500" onClick={() => setViewingDiamond(null)}>
+                    <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                            <div>
+                                <h2 className="text-2xl font-serif text-slate-900">{viewingDiamond.carat}ct {viewingDiamond.shape} Diamond</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1.5">#{viewingDiamond._id.substring(viewingDiamond._id.length - 6).toUpperCase()}</p>
+                            </div>
+                            <button onClick={() => setViewingDiamond(null)} className="p-3 hover:bg-white rounded-2xl transition-all shadow-sm active:scale-95 border border-transparent hover:border-slate-100">
+                                <X className="w-6 h-6 text-slate-400" />
+                            </button>
+                        </div>
+                        <div className="p-10 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div className="aspect-square bg-slate-50 rounded-3xl overflow-hidden border border-slate-100">
+                                        {viewingDiamond.images?.[0] ? (
+                                            <img src={viewingDiamond.images[0]} className="w-full h-full object-cover" alt="Diamond" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center"><Diamond className="w-24 h-24 text-slate-200" /></div>
+                                        )}
+                                    </div>
+                                    {viewingDiamond.images?.length > 1 && (
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {viewingDiamond.images.slice(1, 5).map((img: string, idx: number) => (
+                                                <div key={idx} className="aspect-square bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+                                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">The 4Cs</p>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {[
+                                                { label: 'Cut', value: viewingDiamond.cut },
+                                                { label: 'Color', value: viewingDiamond.color },
+                                                { label: 'Clarity', value: viewingDiamond.clarity },
+                                                { label: 'Carat', value: viewingDiamond.carat }
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                    <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mb-1">{item.label}</p>
+                                                    <p className="text-lg font-bold text-slate-900">{item.value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Technical Specs</p>
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: 'Origin', value: viewingDiamond.origin },
+                                                { label: 'Certification', value: viewingDiamond.certification },
+                                                { label: 'Cert Number', value: viewingDiamond.certNumber || 'N/A' },
+                                                { label: 'Depth', value: viewingDiamond.depth ? `${viewingDiamond.depth}%` : 'N/A' },
+                                                { label: 'Table', value: viewingDiamond.table ? `${viewingDiamond.table}%` : 'N/A' },
+                                                { label: 'Symmetry', value: viewingDiamond.symmetry || 'N/A' },
+                                                { label: 'Polish', value: viewingDiamond.polish || 'N/A' },
+                                                { label: 'Fluorescence', value: viewingDiamond.fluorescence || 'None' }
+                                            ].map((item, idx) => (
+                                                <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                                                    <span className="text-xs text-slate-500 font-medium">{item.label}</span>
+                                                    <span className="text-sm font-bold text-slate-900">{item.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#163E3E] p-6 rounded-3xl text-white">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-2">Valuation</p>
+                                        <p className="text-3xl font-serif">${viewingDiamond.price?.toLocaleString()}</p>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <div className={`w-2 h-2 rounded-full ${viewingDiamond.stock > 0 ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                                            <span className="text-xs font-bold uppercase tracking-wider">{viewingDiamond.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
